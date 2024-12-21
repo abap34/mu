@@ -1,0 +1,13 @@
+name = "mu"
+uuid = "75620b28-da91-49f0-a320-c24fe8c78d74"
+authors = ["abap34 <abap0002@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.11"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
