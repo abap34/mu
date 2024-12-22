@@ -13,9 +13,11 @@ function id_gen()
 end
 
 label_gen = id_gen()
-var_gen = id_gen()
-varname_gen() = "%" * string(var_gen())
+_varname_gen = id_gen()
 
+var_gen(arg::MuAST.Ident) = arg
+var_gen(arg::MuAST.Literal) = arg
+var_gen(arg) = MuAST.Ident("%$(_varname_gen())")
 
 function pushlabel!(instrs::MuIR.IR, label::Int)
     push!(instrs, Instr(MuIR.LABEL, MuAST.Expr(MuAST.LABEL, [label])))
@@ -29,19 +31,22 @@ function pushgotoifnot!(instrs::MuIR.IR, label::Int, cond::MuAST.AbstractSyntaxN
     push!(instrs, Instr(MuIR.GOTOIFNOT, MuAST.Expr(MuAST.GOTOIFNOT, [label, cond])))
 end
 
+# Direct embedding in arguments
+function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Literal, instrs::MuIR.IR) end
+function add_subexpr!(expr::MuAST.Ident, myname::MuAST.Ident, instrs::MuIR.IR) end
 
-
-function add_subexpr!(expr::MuAST.Literal, myname::String, instrs::MuIR.IR)
-    pushfirst!(instrs, Instr(ASSIGN, MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident(myname), expr])))
+function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Ident, instrs::MuIR.IR) 
+    push!(
+        instrs,
+        Instr(ASSIGN, MuAST.Expr(MuAST.ASSIGN, [myname, expr]))
+    )
 end
 
-# Nothing to do.
-function add_subexpr!(_::MuAST.Ident, myname::String, instrs::MuIR.IR) end
 
-function add_subexpr!(expr::MuAST.Expr, myname::String, instrs::MuIR.IR)
+function add_subexpr!(expr::MuAST.Expr, myname::MuAST.Ident, instrs::MuIR.IR)
     f, args... = expr.args
 
-    tmpnames = [varname_gen() for _ in eachindex(args)]
+    tmpnames = [var_gen(arg) for arg in args]
 
     for (tmpname, subexpr) in zip(tmpnames, args)
         add_subexpr!(subexpr, tmpname, instrs)
@@ -51,7 +56,7 @@ function add_subexpr!(expr::MuAST.Expr, myname::String, instrs::MuIR.IR)
         Instr(ASSIGN,
             MuAST.Expr(
                 MuAST.ASSIGN,
-                [MuAST.Ident(myname), MuAST.Expr(MuAST.CALL, [f, tmpnames...])]
+                [myname, MuAST.Expr(MuAST.CALL, [f, tmpnames...])]
             )
         )
     )
@@ -64,7 +69,9 @@ function lowering(expr::MuAST.Expr)
 
     if expr.head == MuAST.CALL
         call_instrs = MuIR.IR()
-        add_subexpr!(expr.args, varname_gen(), call_instrs)
+
+        add_subexpr!(expr, MuAST.UNUSED_IDENT, call_instrs)
+
         append!(instrs, call_instrs)
 
     elseif expr.head == MuAST.ASSIGN
@@ -72,10 +79,9 @@ function lowering(expr::MuAST.Expr)
 
         rhs_instrs = MuIR.IR()
 
-        add_subexpr!(rhs, ident.name, rhs_instrs)
+        add_subexpr!(rhs, ident, rhs_instrs)
 
         append!(instrs, rhs_instrs)
-
 
     elseif expr.head == MuAST.BLOCK
         for arg in expr.args
@@ -153,7 +159,7 @@ function lowering(expr::MuAST.Expr)
         append!(instrs, lowering(body))
         pushgoto!(instrs, cond_label_id)
         pushlabel!(instrs, end_label_id)
-        
+
     else
         throw(ArgumentError("Unsupported expression: $expr"))
     end
