@@ -4,8 +4,21 @@ module MuAST
 
 abstract type AbstractSyntaxNode end
 
+const KEYWORDS = [
+    "if", "else", "elseif", "while", "for", "in", "return", "break", "continue",
+]
+
+
+function valid_identifier(name::String)
+    return Base.isidentifier(name) && !(name in KEYWORDS)
+end
+
 struct Ident <: AbstractSyntaxNode
     name::String
+    function Ident(name::String)
+        # @assert valid_identifier(name) "Invalid identifier: \"$name\""
+        new(name)
+    end
 end
 
 Base.show(io::IO, ident::Ident) = print(io, "`", ident.name, "`")
@@ -23,5 +36,21 @@ Base.show(io::IO, expr::Expr) = begin
     end
     print(io, ")")
 end
+
+function Base.:(==)(expr1::Expr, expr2::Expr)
+    if expr1.head != expr2.head
+        return false
+    end
+    if length(expr1.args) != length(expr2.args)
+        return false
+    end
+    for (arg1, arg2) in zip(expr1.args, expr2.args)
+        if arg1 != arg2
+            return false
+        end
+    end
+    return true
+end
+
 
 end # module MuAST
