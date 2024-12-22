@@ -1,8 +1,22 @@
+OP_MAP = Dict(
+    "+" => "add",
+    "-" => "sub",
+    "*" => "mul",
+    "/" => "div",
+    "%" => "mod",
+    "==" => "eq",
+    "!=" => "neq",
+    "<" => "lt",
+    ">" => "gt",
+    "<=" => "le",
+    ">=" => "ge",
+)
+
 recjoin(arr::AbstractArray) = join(recjoin.(arr))
 recjoin(s::AbstractString) = s
 
+build_bool(w::AbstractString) = w == "true"
 
-build_bool(w::AbstractString) = w == "true" ? true : false
 build_str(w::AbstractArray) = recjoin(w[2])
 
 build_int(w::AbstractString) = Base.parse(Int, w)
@@ -13,8 +27,13 @@ build_float(w::AbstractArray) = build_float(recjoin(w))
 
 
 function build_ident(w)
-    name = recjoin(w)
-    return MuAST.Ident(name)
+    if w == "true"
+        return true
+    elseif w == "false"
+        return false
+    end
+
+    return MuAST.Ident(String(w[2]))
 end
 
 function build_array(w::AbstractArray)
@@ -38,13 +57,18 @@ function build_matrix(w::AbstractArray)
         push!(result, row_arr)
     end
 
-    return stack(result, dims=1)
+    # make [1; 2; 3; 4] as Vector
+    if n_col == 1
+        return [result[i][begin] for i in eachindex(result)]
+    else
+        return stack(result, dims=1)
+    end
 end
 
 function build_unary(w::AbstractArray)
     op, expr = w
     if op == ["-"]
-        return MuAST.Expr(:call, [MuAST.Ident("-"), expr])
+        return MuAST.Expr(:call, [MuAST.Ident("sub"), expr])
     else
         return expr
     end
@@ -55,7 +79,7 @@ function build_binop(w::AbstractArray)
     lhs = w[1]
     for ex in w[2]
         op, rhs = ex
-        lhs = MuAST.Expr(:call, [MuAST.Ident(op), lhs, rhs])
+        lhs = MuAST.Expr(:call, [MuAST.Ident(OP_MAP[op]), lhs, rhs])
     end
     return lhs
 end
@@ -64,23 +88,26 @@ end
 function build_assign(w::AbstractArray)
     ident = w[1]
     expr = w[3]
-    return MuAST.Expr(:call, [MuAST.Ident("="), ident, expr])
+    return MuAST.Expr(:assign, [ident, expr])
 end
 
 
 function build_call(w::AbstractArray)
     name = w[1]
-    args = w[3]
+    args = w[3][1]
+    if isempty(args)
+        return MuAST.Expr(:call, [name])
+    end
     return MuAST.Expr(:call, [name, args...])
 end
 
 
 function build_args(w::AbstractArray)
-    if w[1] == ""
+    if isempty(w)
         return []
     end
-    args = Any[w[1],]
-    restargs = w[2]
+    args = Any[w[1][1],]
+    restargs = w[1][2]
     for arg in restargs
         push!(args, arg[2])
     end
@@ -97,35 +124,14 @@ end
 function build_if(w::AbstractArray)
     cand = w[3]
     body = w[5]
-    elseifs = w[6]
+    elsebody = w[6]
 
-    if isempty(elseifs)
-        if isempty(w[7])
-            return MuAST.Expr(:if, [cand, body])
-        else
-            else_body = w[7][1][2]
-            return MuAST.Expr(:if, [cand, body, else_body])
-        end
+    haselse = !isempty(elsebody)
+
+    if haselse
+        return MuAST.Expr(:if, [cand, body, elsebody[1][2]])
     else
-        elseif_conds = [_elseif[3] for _elseif in elseifs]
-        elseif_bodies = [_elseif[5] for _elseif in elseifs]
-
-        n = length(elseif_conds)
-
-        if isempty(w[7])
-            ex = Expr(:elseif, elseif_conds[end], elseif_bodies[end])
-            for i in n-1:-1:1
-                ex = MuAST.Expr(:elseif, [elseif_conds[i], elseif_bodies[i], ex])
-            end
-            return MuAST.Expr(:if, [cand, body, ex])
-        else
-            else_body = w[7][1][2]
-            ex = MuAST.Expr(:elseif, [elseif_conds[end], elseif_bodies[end], else_body])
-            for i in n-1:-1:1
-                ex = MuAST.Expr(:elseif, [elseif_conds[i], elseif_bodies[i], ex])
-            end
-            return MuAST.Expr(:if, [cand, body, ex])
-        end
+        return MuAST.Expr(:if, [cand, body])
     end
 end
 
