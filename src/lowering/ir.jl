@@ -19,7 +19,19 @@ struct Instr
 end
 
 function Base.show(io::IO, instr::Instr)
-    print(io, instr.irtype, " ", instr.expr)
+    if instr.irtype == CALL
+        print(io, instr.expr.args[1].name, "(", join(instr.expr.args[2:end], ", "), ")")
+    elseif instr.irtype == ASSIGN
+        print(io, instr.expr.args[1].name, " = ", instr.expr.args[2])
+    elseif instr.irtype == GOTO
+        print(io, "GOTO #", instr.expr.args[1])
+    elseif instr.irtype == GOTOIFNOT
+        print(io, "GOTO #", instr.expr.args[1], " IF NOT ", instr.expr.args[2])
+    elseif instr.irtype == LABEL
+        print(io, "LABEL #", instr.expr.args[1])
+    else
+        print(io, "#### Unknown IRType ####")
+    end
 end
 
 
@@ -34,7 +46,7 @@ function Base.show(io::IO, ir::IR)
     println(io, @sprintf("| %*s | %-*s | %s", idx_width, "idx", type_width, "type", "instr"))
     println(io, "| ", "-"^idx_width, " | ", "-"^type_width, " | ", "-"^20)
     for (idx, instr) in enumerate(ir)
-        println(io, @sprintf("| %*d | %-*s | %s", idx_width, idx, type_width, instr.irtype, instr.expr))
+        println(io, @sprintf("| %*d | %-*s | %s", idx_width, idx, type_width, instr.irtype, instr))
     end
 end
 
