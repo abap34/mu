@@ -1,6 +1,5 @@
 using PEG
 
-
 @rule bool = (
     r"true"p,
     r"false"p
@@ -24,12 +23,13 @@ using PEG
 
 
 @rule num = float, int
+@rule literal = bool, str, num
+
 
 
 @rule ident = (
-    r"^(?!.*(function|if|else|while|return|function|return|true|false))[a-zA-Z_][a-zA-Z0-9_]*"p 
+    -(r"^if\s*$"p, r"^else\s*$"p, r"^while\s*$"p, r"^true\s*$"p, r"^false\s*$"p) & r"[a-zA-Z_][a-zA-Z0-9_]*"p
 ) |> build_ident
-
 
 @rule array_contents = (
     expr & (r","p & expr)[*]
@@ -46,13 +46,11 @@ using PEG
 
 
 @rule primary = (
-    call,    
-    num, 
-    str,
-    bool,
+    call,
+    literal,
     ident, 
     array,
-    matrix,
+    matrix,    
 ) 
 
 @rule unary = (
@@ -81,33 +79,23 @@ using PEG
 
 
 @rule args = (
-    "" & (expr & (r","p & expr)[*])[:?]
+    (expr & (r","p & expr)[*])[:?]
 ) |> build_args
 
 
 @rule call = (
-    ident & r"\("p & args & r"\)"p
+    ident & r"\("p & args[:?] & r"\)"p
 ) |> build_call
 
 
 @rule seq = (
-    r"\{"p & expr[*] & r"\}"p
+    r"\{"p & statement[*] & r"\}"p
 ) |> build_seq
 
 
 @rule _if = (
-    r"if"p & r"\("p & expr & r"\)"p & seq & (r"elseif"p & r"\("p & expr & r"\)"p & seq)[*] & (r"else"p & seq)[:?]
+    r"if"p & r"\("p & expr & r"\)"p & seq & (r"else"p & seq)[:?]
 ) |> build_if
-
-
-@rule argnames = (
-    ident & (r","p & ident)[*]
-) |> build_argnames
-
-
-@rule _function = (
-    r"function"p & ident & r"\("p & argnames & r"\)"p & seq
-) |> build_function
 
 
 @rule _while = (
@@ -115,12 +103,9 @@ using PEG
 ) |> build_while
 
 
-@rule _return = (
-    r"return"p & expr
-) |> build_return
+@rule expr = call, relational
 
+@rule statement = assign, _if, _while, seq, expr
 
-@rule expr = assign, call, relational, _if, _while, _function, seq, _return
-
-@rule program = expr[*] |> build_program
+@rule program = statement[*] |> build_program
 
