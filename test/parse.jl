@@ -1,4 +1,4 @@
-using mu : MuCore
+using mu.MuCore
 using mu.MuCore.MuAST: ASSIGN, BLOCK, CALL, IF, IFELSE, WHILE
 
 parseerror() = iserror(expectederror=Base.Meta.ParseError)
