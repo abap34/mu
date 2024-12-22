@@ -21,6 +21,8 @@ struct Ident <: AbstractSyntaxNode
     end
 end
 
+const Literal = Union{Int, Float64, String, Bool, Array}
+
 Base.show(io::IO, ident::Ident) = print(io, "`", ident.name, "`")
 
 @enum ExprHead begin
@@ -30,7 +32,10 @@ Base.show(io::IO, ident::Ident) = print(io, "`", ident.name, "`")
     IFELSE
     IF
     WHILE
-    PROGRAM    
+    PROGRAM
+    GOTO         # |
+    GOTOIFNOT    # | ==> These types are only used in IR.
+    LABEL        # |     Result of `parse` doesn't contain these types.    
 end
 
 struct Expr <: AbstractSyntaxNode
