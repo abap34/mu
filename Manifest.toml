@@ -2,9 +2,18 @@
 
 julia_version = "1.11.0"
 manifest_format = "2.0"
-project_hash = "632b3de2b711927676d4f3101654488d908861e7"
+project_hash = "17c1330631e965ea44ada0de4766717b09fd31c4"
 
 [[deps.PEG]]
 git-tree-sha1 = "cc1ccd3e9569a202d4f6c835a00aad39d7a15c6d"
 uuid = "12d937ae-5f68-53be-93c9-3a6f997a20a8"
 version = "1.0.2"
+
+[[deps.Printf]]
+deps = ["Unicode"]
+uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+version = "1.11.0"
+
+[[deps.Unicode]]
+uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+version = "1.11.0"

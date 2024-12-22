@@ -5,9 +5,11 @@ version = "1.0.0-DEV"
 
 [deps]
 PEG = "12d937ae-5f68-53be-93c9-3a6f997a20a8"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [compat]
 PEG = "1.0.2"
+Printf = "1.11.0"
 julia = "1.11"
 
 [extras]
