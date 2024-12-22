@@ -1,15 +1,11 @@
-using mu
-
-using mu.MuCore
+using mu : MuCore
+using mu.MuCore.MuAST: ASSIGN, BLOCK, CALL, IF, IFELSE, WHILE
 
 parseerror() = iserror(expectederror=Base.Meta.ParseError)
 
 function is_ident(ident::String)
     return (ast) -> (ast == MuCore.MuAST.Ident(ident))
 end
-
-
-
 
 
 testcases = Dict(
@@ -60,11 +56,12 @@ testcases = Dict(
     ], 
     
     "unary" => [
-
+        #
         # 単項演算
+        #
         ("1.0", MuCore.unary) => (isequal(1.0)),
-        ("-1.234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("sub"), 1.234]))),
-        ("-1234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("sub"), 1234]))),
+        ("-1.234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), 1.234]))),
+        ("-1234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), 1234]))),
         ("1", MuCore.unary) => (isequal(1)),
         ("\"hello\"", MuCore.unary) => (isequal("hello")),
         ("true", MuCore.unary) => (isequal(true)),
@@ -75,73 +72,72 @@ testcases = Dict(
         ("if", MuCore.unary) => (iserror()),
         ("true", MuCore.unary) => (isequal(true)),
         ("1 + 2", MuCore.add) => (isequal(
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("add"), 1, 2])
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("add"), 1, 2])
         )),
         ("-read_as_int()", MuCore.unary) => (isequal(
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("read_as_int")])])
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("read_as_int")])])
         )),
     ], 
     
     "binop" => [
-
         #
         # add (連続演算)
         #
         ("1 + 2 + 3", MuCore.add) => begin
             # 1 + 2 + 3 は (1 + 2) + 3 という左結合
-            lhs = MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("add"), 1, 2])
+            lhs = MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("add"), 1, 2])
             rhs = 3
-            isequal(MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("add"), lhs, rhs]))
+            isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("add"), lhs, rhs]))
         end,
         ("a - b - c", MuCore.add) => begin
             # (a - b) - c
-            lhs = MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("sub"),
+            lhs = MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"),
                 MuCore.MuAST.Ident("a"), MuCore.MuAST.Ident("b")])
             rhs = MuCore.MuAST.Ident("c")
-            isequal(MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("sub"), lhs, rhs]))
+            isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), lhs, rhs]))
         end,
 
         #
         # mul
         #
         ("2 * 3", MuCore.mul) => (isequal(
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("mul"), 2, 3])
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("mul"), 2, 3])
         )),
         ("a * b / c", MuCore.mul) => begin
             # a * b / c は左結合: (a*b)/c
-            lhs = MuCore.MuAST.Expr(:call, [
+            lhs = MuCore.MuAST.Expr(CALL, [
                 MuCore.MuAST.Ident("mul"),
                 MuCore.MuAST.Ident("a"),
                 MuCore.MuAST.Ident("b")
             ])
             rhs = MuCore.MuAST.Ident("c")
-            isequal(MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("div"), lhs, rhs]))
+            isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("div"), lhs, rhs]))
         end,
 
         #
         # relational
         #
         ("1 < 2", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("lt"), 1, 2])
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("lt"), 1, 2])
         )),
         ("x == y", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("eq"),
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("eq"),
                 MuCore.MuAST.Ident("x"), MuCore.MuAST.Ident("y")])
         )),
         ("10 != 20", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("neq"), 10, 20])
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("neq"), 10, 20])
         )),
 
         #
         # assign
         #
         ("x = 123", MuCore.assign) => (isequal(
-            MuCore.MuAST.Expr(:assign, [MuCore.MuAST.Ident("x"), 123])
+            MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("x"), 123])
         )),
         ("x+1 = y", MuCore.assign) => (parseerror()),
         ("foo_bar = read_as_int()", MuCore.assign) => (isequal(
-            MuCore.MuAST.Expr(:assign, [MuCore.MuAST.Ident("foo_bar"), MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("read_as_int")])])
-        )),    
+            MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("foo_bar"), MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("read_as_int")])])
+        )),
     ], 
     
     "call" => [
@@ -150,15 +146,15 @@ testcases = Dict(
         #
         ("foo()", MuCore.call) => (isequal(
             # 引数なし
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("foo")])
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("foo")])
         )),
         ("bar(1, 2)", MuCore.call) => (isequal(
-            MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("bar"), 1, 2])
+            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("bar"), 1, 2])
         )),
         ("foo(bar())", MuCore.call) => (isequal(
-            MuCore.MuAST.Expr(:call, [
+            MuCore.MuAST.Expr(CALL, [
                 MuCore.MuAST.Ident("foo"),
-                MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("bar")])
+                MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("bar")])
             ])
         ))
     ], 
@@ -168,52 +164,56 @@ testcases = Dict(
         # seq (複数 expr)
         #
         ("{ 1 2 3 }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(:block, [1, 2, 3])
+            MuCore.MuAST.Expr(BLOCK, [1, 2, 3])
         )),
         ("{ }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(:block, [])
+            MuCore.MuAST.Expr(BLOCK, [])
         )),], "if" => [
         #
         # if 文
         #
         ("if(1){2}", MuCore._if) => (isequal(
-            # if (1) {2} のみ
-            MuCore.MuAST.Expr(:if, [
+            MuCore.MuAST.Expr(IF, [
                 1,
-                MuCore.MuAST.Expr(:block, [2]),
+                MuCore.MuAST.Expr(BLOCK, [2]),
             ])
         )),
         ("if(x){ y=1 } else { y=3 }", MuCore._if) => isequal(
-            MuCore.MuAST.Expr(:if, [
+            MuCore.MuAST.Expr(IFELSE, [
                 MuCore.MuAST.Ident("x"),
-                MuCore.MuAST.Expr(:block, [
-                    MuCore.MuAST.Expr(:assign, [MuCore.MuAST.Ident("y"), 1])
+                MuCore.MuAST.Expr(BLOCK, [
+                    MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("y"), 1])
                 ]),
-                MuCore.MuAST.Expr(:block, [
-                    MuCore.MuAST.Expr(:assign, [MuCore.MuAST.Ident("y"), 3])
+                MuCore.MuAST.Expr(BLOCK, [
+                    MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("y"), 3])
                 ])
             ]
             )
         ),
-    ], "while" => [
+    ], 
+    
+    "while"=> [
 
         #
         # while 文
         #
         ("while(x){ x = x - 1 }", MuCore._while) => (isequal(
-            MuCore.MuAST.Expr(:while, [
+            MuCore.MuAST.Expr(WHILE, [
                 MuCore.MuAST.Ident("x"),
-                MuCore.MuAST.Expr(:block, [
-                    MuCore.MuAST.Expr(:assign, [MuCore.MuAST.Ident("x"), MuCore.MuAST.Expr(:call, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Ident("x"), 1])])
+                MuCore.MuAST.Expr(BLOCK, [
+                    MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("x"), MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Ident("x"), 1])])
                 ])
             ])
-        )), 
+        )),
         ("{ a=1 b=2 }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(:block, [
-                MuCore.MuAST.Expr(:assign, [MuCore.MuAST.Ident("a"), 1]),
-                MuCore.MuAST.Expr(:assign, [MuCore.MuAST.Ident("b"), 2])
+            MuCore.MuAST.Expr(BLOCK, [
+                MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("a"), 1]),
+                MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("b"), 2])
             ])
-        )),], "program" => [
+        )),
+    ], 
+    
+    "program" => [
 
         #
         # program (ソース全体). 例として少し複雑なサンプル
@@ -274,9 +274,7 @@ function check(src::String, rule::Function, checker::Function)
             @info "Failed. src: $src checker: $checker, got error: $e"
         end
     end
-
 end
-
 
 @testset "parse" begin
     for (testset_name, testcases) in testcases
