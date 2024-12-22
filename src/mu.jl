@@ -3,8 +3,10 @@ module mu
 module MuCore
 
 include("parse/parse.jl")
-include("lowering.jl")
+include("lowering/lowering.jl")
 
-end
+
+end # module MuCore
+
 
 end
