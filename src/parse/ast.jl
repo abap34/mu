@@ -21,6 +21,8 @@ struct Ident <: AbstractSyntaxNode
     end
 end
 
+const UNUSED_IDENT = Ident("_")
+
 const Literal = Union{Int, Float64, String, Bool, Array}
 
 Base.show(io::IO, ident::Ident) = print(io, "`", ident.name, "`")
