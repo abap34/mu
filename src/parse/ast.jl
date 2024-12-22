@@ -5,7 +5,7 @@ module MuAST
 abstract type AbstractSyntaxNode end
 
 const KEYWORDS = [
-    "if", "else", "elseif", "while", "for", "in", "return", "break", "continue",
+    "if", "else", "elseif", "while"
 ]
 
 
@@ -23,9 +23,18 @@ end
 
 Base.show(io::IO, ident::Ident) = print(io, "`", ident.name, "`")
 
+@enum ExprHead begin
+    CALL
+    ASSIGN
+    BLOCK
+    IFELSE
+    IF
+    WHILE
+    PROGRAM    
+end
 
 struct Expr <: AbstractSyntaxNode
-    head::Symbol
+    head::ExprHead
     args::Vector{Any} # It is not avoidable to use Any here
 end
 
@@ -52,5 +61,6 @@ function Base.:(==)(expr1::Expr, expr2::Expr)
     return true
 end
 
+export Expr, ExprHead, Ident
 
 end # module MuAST

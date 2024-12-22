@@ -68,7 +68,7 @@ end
 function build_unary(w::AbstractArray)
     op, expr = w
     if op == ["-"]
-        return MuAST.Expr(:call, [MuAST.Ident("sub"), expr])
+        return MuAST.Expr(MuAST.CALL, [MuAST.Ident("sub"), expr])
     else
         return expr
     end
@@ -79,7 +79,7 @@ function build_binop(w::AbstractArray)
     lhs = w[1]
     for ex in w[2]
         op, rhs = ex
-        lhs = MuAST.Expr(:call, [MuAST.Ident(OP_MAP[op]), lhs, rhs])
+        lhs = MuAST.Expr(MuAST.CALL, [MuAST.Ident(OP_MAP[op]), lhs, rhs])
     end
     return lhs
 end
@@ -88,7 +88,7 @@ end
 function build_assign(w::AbstractArray)
     ident = w[1]
     expr = w[3]
-    return MuAST.Expr(:assign, [ident, expr])
+    return MuAST.Expr(MuAST.ASSIGN, [ident, expr])
 end
 
 
@@ -96,9 +96,9 @@ function build_call(w::AbstractArray)
     name = w[1]
     args = w[3][1]
     if isempty(args)
-        return MuAST.Expr(:call, [name])
+        return MuAST.Expr(MuAST.CALL, [name])
     end
-    return MuAST.Expr(:call, [name, args...])
+    return MuAST.Expr(MuAST.CALL, [name, args...])
 end
 
 
@@ -117,7 +117,7 @@ end
 
 function build_seq(w::AbstractArray)
     bodies = w[2]
-    return MuAST.Expr(:block, [bodies...])
+    return MuAST.Expr(MuAST.BLOCK, [bodies...])
 end
 
 
@@ -129,9 +129,9 @@ function build_if(w::AbstractArray)
     haselse = !isempty(elsebody)
 
     if haselse
-        return MuAST.Expr(:if, [cand, body, elsebody[1][2]])
+        return MuAST.Expr(MuAST.IFELSE, [cand, body, elsebody[1][2]])
     else
-        return MuAST.Expr(:if, [cand, body])
+        return MuAST.Expr(MuAST.IF, [cand, body])
     end
 end
 
@@ -145,27 +145,15 @@ function build_argnames(w)
     return args
 end
 
-
-function build_function(w)
-    name = w[2]
-    args = w[4]
-    body = w[6]
-    return MuAST.Expr(:function, [MuAST.Expr(:call, [name, args...]), body])
-end
-
-
 function build_while(w)
     cond = w[3]
     body = w[5]
-    return MuAST.Expr(:while, [cond, body])
+    return MuAST.Expr(MuAST.WHILE, [cond, body])
 end
 
-function build_return(w)
-    return MuAST.Expr(:return, [w[2]])
-end
 
 
 function build_program(w)
     exprs = filter(x -> x !== nothing, w)
-    return exprs
+    return MuAST.Expr(MuAST.PROGRAM, exprs)
 end
