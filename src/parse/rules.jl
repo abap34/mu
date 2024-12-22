@@ -1,6 +1,5 @@
 using PEG
 
-include("ast.jl")
 
 @rule bool = (
     r"true"p,

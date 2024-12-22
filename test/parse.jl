@@ -1,4 +1,6 @@
-using .MuCore
+using mu
+
+using mu.MuCore
 
 parseerror() = iserror(expectederror=Base.Meta.ParseError)
 
