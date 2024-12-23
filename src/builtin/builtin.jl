@@ -1,14 +1,15 @@
 module MuBuiltins
 
-builtins = Dict{String,Function}()
-
-function run_builtin!(f::String, args::AbstractArray, env::Dict{String,Any})
-    return get_builtin(f)(args, env)
-end
-
 function get_builtin(f::String)
-    return builtins[f]
+    if haskey(builtins, f)
+        return builtins[f]
+    else
+        throw("Unknown builtin: $f")
+    end
 end
+
+
+builtins = Dict{String, Function}()
 
 macro builtin(ex)
     f = string(ex.args[1].args[1])
@@ -16,7 +17,6 @@ macro builtin(ex)
         builtins[$f] = eval($ex)
     end |> esc
 end
-
 
 @builtin function add(args::AbstractArray, env::Dict{String,Any})
     return args[1] + args[2]
@@ -77,5 +77,12 @@ end
     Base.println(args...)
 end
 
+@builtin function print_env(args::AbstractArray, env::Dict{String,Any})
+    Base.println(env)
+end
+
+@builtin function exit(args::AbstractArray, env::Dict{String,Any})
+    Base.exit(args[1])
+end
 
 end # module MuBuiltins
