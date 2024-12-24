@@ -57,45 +57,60 @@ function show_expr(io::IO, expr::Expr; indent::Int=0)
     indent_str = repeat(" ", indent * IDENT_WIDTH)
     subindent_str = repeat(" ", (indent + 1) * IDENT_WIDTH)
 
+    print_noindent(args...) = print(io, args...)
     print_indent(args...) = print(io, indent_str, args...)
     print_subindent(args...) = print(io, subindent_str, args...)
     newline() = println(io)
 
-    # TYPEDIDENT
     if expr.head == TYPEDIDENT
         print_indent("(TYPEDIDENT ")
-        # newline()
-        print(expr.args[1], " :: ")
+        print_noindent(expr.args[1], " :: ")
 
         if isa(expr.args[2], Expr)
-            # newline()
             show_expr(io, expr.args[2]; indent=indent + 2)
         else
-            print(io, expr.args[2])
+            print_noindent(expr.args[2])
         end
 
-        # newline()
-        print(")")
-
+        print_noindent(io, ")")
     elseif expr.head == TYPE
-        print("(TYPE")
-        # newline()
+        print_noindent("(TYPE")
         if length(expr.args) == 1
             if isa(expr.args[1], Expr)
                 show_expr(io, expr.args[1]; indent=indent + 1)
             else
-                print(expr.args[1])
+                print_noindent(expr.args[1])
             end
         else
             head_part = expr.args[1]
             tail_part = join(expr.args[2:end], ", ")
-            print(head_part, "{", tail_part, "}")
+            print_indent(head_part, "{", tail_part, "}")
         end
-        # newline()
         print(")")
+    elseif expr.head == CALL || expr.head == ASSIGN || expr.head == RETURN
+        print_indent("(", expr.head, " ")
+        print_noindent(expr.args[1])
+        for arg in expr.args[2:end]
+            print(io, " ", arg)
+        end
+        print_noindent(")")
+    elseif expr.head == FUNCTION
+        print_indent("(FUNCTION")
+        newline()
+        print_subindent(expr.args[1])         # Function name
+        newline()
+        if isempty(expr.args[2])
+            print_subindent("(#= No arguments =#)")
+        else
+            show_expr(io, expr.args[2]; indent=indent + 1)
+        end
+        newline()
+        show_expr(io, expr.args[3]; indent=indent + 1) # Body
+        newline()
+        print_indent(")")
     else
         print_indent("(")
-        print(io, expr.head)
+        print_noindent(expr.head)
         newline()
         for arg in expr.args
             if isa(arg, Expr)
