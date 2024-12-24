@@ -102,7 +102,7 @@ function build_call(w::AbstractArray)
 end
 
 
-function build_args(w::AbstractArray)
+function build_actual_args(w::AbstractArray)
     if isempty(w)
         return []
     end
@@ -135,7 +135,6 @@ function build_if(w::AbstractArray)
     end
 end
 
-
 function build_argnames(w)
     args = Any[w[1],]
     restargs = w[2]
@@ -151,6 +150,40 @@ function build_while(w)
     return MuAST.Expr(MuAST.WHILE, [cond, body])
 end
 
+function build_typedident(w)
+    argname = w[1]
+    argtype = w[3]
+    return MuAST.Expr(MuAST.TYPING, [argname, argtype])
+end
+
+function build_formal_args(w)
+    args = MuAST.Expr[w[1],]
+    restargs = w[2]
+    for arg in restargs
+        push!(args, arg[2])
+    end
+ 
+    @assert all(x -> x.head == MuAST.TYPING, args) "All arguments must be typed"
+    
+    return MuAST.FormalArgs(args)
+end
+
+function build_function(w)
+    name = w[2]
+    if isempty(w[4])  # no args case.
+        args = MuAST.FormalArgs(MuAST.Expr[])
+    else
+        args = w[4][1]
+    end
+    body = w[6]
+
+    return MuAST.Expr(MuAST.FUNCTION, [name, args, body])
+end
+
+function build_return(w)
+    expr = w[2]
+    return MuAST.Expr(MuAST.RETURN, [expr])
+end
 
 
 function build_program(w)

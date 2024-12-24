@@ -35,6 +35,9 @@ Base.show(io::IO, ident::Ident) = print(io, "`", ident.name, "`")
     IF
     WHILE
     PROGRAM
+    FUNCTION
+    TYPING
+    RETURN
     GOTO         # |
     GOTOIFNOT    # | ==> These types are only used in IR.
     LABEL        # |     Result of `parse` doesn't contain these types.    
@@ -66,6 +69,26 @@ function Base.:(==)(expr1::Expr, expr2::Expr)
         end
     end
     return true
+end
+
+struct FormalArgs <: AbstractSyntaxNode
+    args::Vector{Expr}
+    function FormalArgs(args::Vector{Expr})
+        @assert all(x -> x.head == TYPING, args) "All arguments must be typed"
+        new(args)
+    end
+end
+
+function Base.show(io::IO, args::FormalArgs) 
+    if isempty(args.args)
+        print(io, "( #noargs )")
+        return
+    end
+    print(io, "(")
+    for arg in args.args
+        print(io, " ", "$(arg.args[1])::$(arg.args[2])")
+    end
+    print(io, ")")
 end
 
 export Expr, ExprHead, Ident

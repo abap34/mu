@@ -28,7 +28,8 @@ using PEG
 
 
 @rule ident = (
-    -(r"^if\s*$"p, r"^else\s*$"p, r"^while\s*$"p, r"^true\s*$"p, r"^false\s*$"p) & r"[a-zA-Z_][a-zA-Z0-9_]*"p
+    -(r"^if\s*$"p, r"^else\s*$"p, r"^while\s*$"p, r"^true\s*$"p, r"^false\s*$"p, r"^function\s*$"p, r"^return\s*$"p)
+    & r"[a-zA-Z_][a-zA-Z0-9_]*"p
 ) |> build_ident
 
 @rule array_contents = (
@@ -78,13 +79,13 @@ using PEG
 ) |> build_assign
 
 
-@rule args = (
+@rule actual_args = (
     (expr & (r","p & expr)[*])[:?]
-) |> build_args
+) |> build_actual_args
 
 
 @rule call = (
-    ident & r"\("p & args[:?] & r"\)"p
+    ident & r"\("p & actual_args[:?] & r"\)"p
 ) |> build_call
 
 
@@ -101,6 +102,25 @@ using PEG
 @rule _while = (
     r"while"p & r"\("p & expr & r"\)"p & seq
 ) |> build_while
+
+
+@rule typedident = (
+    ident & r"::"p & ident
+) |> build_typedident
+
+@rule formal_args = (
+    typedident & (r","p & typedident)[*]
+) |> build_formal_args
+
+@rule _function = (
+    r"function"p & ident & r"\("p & formal_args[:?] & r"\)"p & seq
+) |> build_function
+
+
+@rule _return = (
+    r"return"p & expr
+) |> build_return
+
 
 
 @rule expr = call, relational
