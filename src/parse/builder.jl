@@ -188,7 +188,7 @@ end
 function build_function(w)
     name = w[2]
     if isempty(w[4])  # no args case.
-        args = MuAST.Expr[]
+        args = MuAST.Expr(MuAST.FORMALARGS, [])
     else
         args = w[4][1]
     end
