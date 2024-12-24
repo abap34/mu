@@ -25,11 +25,9 @@ using PEG
 @rule num = float, int
 @rule literal = bool, str, num
 
-
-
 @rule ident = (
     -(r"^if\s*$"p, r"^else\s*$"p, r"^while\s*$"p, r"^true\s*$"p, r"^false\s*$"p, r"^function\s*$"p, r"^return\s*$"p)
-    & r"[a-zA-Z_][a-zA-Z0-9_]*"p
+    & r"[a-zA-Z_α-ωΑ-Ω][a-zA-Z_α-ωΑ-Ω0-9]*"p
 ) |> build_ident
 
 @rule array_contents = (
