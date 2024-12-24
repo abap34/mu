@@ -62,36 +62,37 @@ function show_expr(io::IO, expr::Expr; indent::Int=0)
     print_subindent(args...) = print(io, subindent_str, args...)
     newline() = println(io)
 
-    if expr.head == TYPEDIDENT
-        print_indent("(TYPEDIDENT ")
-        print_noindent(expr.args[1], " :: ")
-
-        if isa(expr.args[2], Expr)
-            show_expr(io, expr.args[2]; indent=indent + 2)
+    if expr.head == FORMALARGS
+        print_indent("(")
+        if isempty(expr.args)
+            print_noindent("#= No arguments =#)")
         else
-            print_noindent(expr.args[2])
+            for arg in expr.args
+                show_expr(io, arg; indent=indent + 1)
+                print_noindent(" ")
+            end
         end
-
-        print_noindent(io, ")")
+        print_noindent(")")
+    elseif expr.head == TYPEDIDENT
+        print_noindent(expr.args[1], "::")
+        show_expr(io, expr.args[2]; indent=indent + 1)
     elseif expr.head == TYPE
-        print_noindent("(TYPE")
-        if length(expr.args) == 1
+        if length(expr.args) == 1  # No type parameter
             if isa(expr.args[1], Expr)
                 show_expr(io, expr.args[1]; indent=indent + 1)
             else
                 print_noindent(expr.args[1])
             end
-        else
-            head_part = expr.args[1]
-            tail_part = join(expr.args[2:end], ", ")
-            print_indent(head_part, "{", tail_part, "}")
+        else                     # Type parameter exists
+            head_part = expr.args[1] # e.g. Array
+            tail_part = join(expr.args[2:end], ", ") # e.g. {Int, 2}
+            print_noindent(head_part, "{", tail_part, "}")
         end
-        print(")")
     elseif expr.head == CALL || expr.head == ASSIGN || expr.head == RETURN
         print_indent("(", expr.head, " ")
         print_noindent(expr.args[1])
         for arg in expr.args[2:end]
-            print(io, " ", arg)
+            print_noindent(" ", arg)
         end
         print_noindent(")")
     elseif expr.head == FUNCTION
@@ -99,11 +100,7 @@ function show_expr(io::IO, expr::Expr; indent::Int=0)
         newline()
         print_subindent(expr.args[1])         # Function name
         newline()
-        if isempty(expr.args[2])
-            print_subindent("(#= No arguments =#)")
-        else
-            show_expr(io, expr.args[2]; indent=indent + 1)
-        end
+        show_expr(io, expr.args[2]; indent=indent + 1) # Formal arguments
         newline()
         show_expr(io, expr.args[3]; indent=indent + 1) # Body
         newline()
@@ -116,7 +113,7 @@ function show_expr(io::IO, expr::Expr; indent::Int=0)
             if isa(arg, Expr)
                 show_expr(io, arg; indent=indent + 1)
             elseif isa(arg, String)
-                print_subindent("\"", arg, "\"")    
+                print_subindent("\"", arg, "\"")
             else
                 print_subindent(arg)
             end
