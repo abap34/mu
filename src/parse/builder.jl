@@ -150,10 +150,27 @@ function build_while(w)
     return MuAST.Expr(MuAST.WHILE, [cond, body])
 end
 
+function build_type_parameter(w)
+    types = Any[w[1],]
+    resttypes = w[2]
+    for t in resttypes
+        push!(types, t[2])
+    end
+    return types
+end
+
+function build_type(w)
+    if isempty(w[2]) # no type parameter case
+        return MuAST.Expr(MuAST.TYPE, [w[1]])
+    else
+        return MuAST.Expr(MuAST.TYPE, [w[1], w[2][1][2]...])
+    end
+end
+
 function build_typedident(w)
     argname = w[1]
     argtype = w[3]
-    return MuAST.Expr(MuAST.TYPING, [argname, argtype])
+    return MuAST.Expr(MuAST.TYPEDIDENT, [argname, argtype])
 end
 
 function build_formal_args(w)
@@ -162,16 +179,16 @@ function build_formal_args(w)
     for arg in restargs
         push!(args, arg[2])
     end
- 
-    @assert all(x -> x.head == MuAST.TYPING, args) "All arguments must be typed"
-    
-    return MuAST.FormalArgs(args)
+
+    @assert all(x -> x.head == MuAST.TYPEDIDENT, args) "All arguments must be typed"
+
+    return MuAST.Expr(MuAST.FORMALARGS, args)
 end
 
 function build_function(w)
     name = w[2]
     if isempty(w[4])  # no args case.
-        args = MuAST.FormalArgs(MuAST.Expr[])
+        args = MuAST.Expr[]
     else
         args = w[4][1]
     end

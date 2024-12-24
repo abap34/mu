@@ -70,7 +70,7 @@ using PEG
 
 
 @rule relational = (
-    add & ((r"!="p, r"<="p, r"=<"p, r">"p, r"<"p, r"=="p) & add)[*]
+    add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p, ) & add)[*]
 ) |> build_binop
 
 
@@ -104,8 +104,17 @@ using PEG
 ) |> build_while
 
 
+@rule type_parameter = (
+    primary & (r","p & primary)[*]
+) |> build_type_parameter
+
+
+@rule type = (
+    ident & (r"\{"p & type_parameter & r"\}"p)[:?]
+) |> build_type
+
 @rule typedident = (
-    ident & r"::"p & ident
+    ident & r"::"p & type
 ) |> build_typedident
 
 @rule formal_args = (
@@ -125,7 +134,7 @@ using PEG
 
 @rule expr = call, relational
 
-@rule statement = assign, _if, _while, seq, expr
+@rule statement = _function, assign, _if, _while, seq, expr
 
 @rule program = statement[*] |> build_program
 
