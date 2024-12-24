@@ -51,84 +51,127 @@ struct Expr <: AbstractSyntaxNode
     head::ExprHead
     args::Vector{Any} # It is not avoidable to use Any here
 end
-const IDENT_WIDTH = 2
 
+const IDENT_WIDTH = 4
+
+const KEYWORDS_COLOR = :magenta
+const DEFAULT_COLOR = :light_green
+const COMMENT_COLOR = :light_black
+const IDENT_COLOR = :white
+const STRING_COLOR = :light_yellow
+const BRACKET_COLORS = [:blue, :cyan, :light_blue, :light_green, :light_yellow]
+
+gen_bracket_color(indent) = BRACKET_COLORS[(indent÷IDENT_WIDTH)%length(BRACKET_COLORS)+1]
+
+
+# The difference in the interfaces of `Ident` and `Expr` is purely due to historical reasons.
+# In the future, these should be unified, and all output, including color control,
+# should be handled by `show_expr` (also it should be renamed).
+# For now, let's leave a working version here for the time being.
 function show_expr(io::IO, expr::Expr; indent::Int=0)
     indent_str = repeat(" ", indent * IDENT_WIDTH)
     subindent_str = repeat(" ", (indent + 1) * IDENT_WIDTH)
 
-    print_noindent(args...) = print(io, args...)
-    print_indent(args...) = print(io, indent_str, args...)
-    print_subindent(args...) = print(io, subindent_str, args...)
+    print_noindent(args...; color=DEFAULT_COLOR)  = printstyled(io, args...; color=color)
+    print_indent(args...; color=DEFAULT_COLOR)    = printstyled(io, indent_str, args...; color=color)
+    print_subindent(args...; color=DEFAULT_COLOR) = printstyled(io, subindent_str, args...; color=color)
     newline() = println(io)
+    space() = print_noindent(" ")
 
     if expr.head == FORMALARGS
-        print_indent("(")
+        bracket_color = gen_bracket_color(indent)
+        print_indent("(", color=bracket_color)
         if isempty(expr.args)
-            print_noindent("#= No arguments =#)")
+            print_noindent("#= No arguments =#", color=COMMENT_COLOR)
         else
-            for arg in expr.args
-                show_expr(io, arg; indent=indent + 1)
-                print_noindent(" ")
+            print_noindent(expr.args[1], color=IDENT_COLOR)
+            for arg in expr.args[2:end]
+                space()
+                show_expr(io, arg, indent=indent + 1)
             end
         end
-        print_noindent(")")
+        print_noindent(")", color=bracket_color)
     elseif expr.head == TYPEDIDENT
-        print_noindent(expr.args[1], "::")
-        show_expr(io, expr.args[2]; indent=indent + 1)
+        print_noindent(expr.args[1], "::", color=KEYWORDS_COLOR)
+        show_expr(io, expr.args[2], indent=indent + 1)
+    elseif expr.head == RETURN
+        bracket_color = gen_bracket_color(indent)
+        print_indent("(", color=bracket_color)
+        print_noindent("RETURN", color=KEYWORDS_COLOR)
+        if isa(expr.args[1], Expr)
+            show_expr(io, expr.args[1], indent=indent + 1)
+        elseif isa(expr.args[1], String)
+            print_noindent(" ", "\"", expr.args[1], "\"", color=STRING_COLOR)
+        else
+            print_noindent(" ", expr.args[1], color=DEFAULT_COLOR)
+        end
+        print_noindent(")", color=bracket_color)
     elseif expr.head == TYPE
         if length(expr.args) == 1  # No type parameter
             if isa(expr.args[1], Expr)
-                show_expr(io, expr.args[1]; indent=indent + 1)
+                show_expr(io, expr.args[1], indent=indent + 1) # e.g. random_type()
             else
-                print_noindent(expr.args[1])
+                print_noindent(expr.args[1], color=IDENT_COLOR) # e.g. Int
             end
-        else                     # Type parameter exists
+        else   # Type parameter exists
             head_part = expr.args[1] # e.g. Array
             tail_part = join(expr.args[2:end], ", ") # e.g. {Int, 2}
-            print_noindent(head_part, "{", tail_part, "}")
+            print_noindent(head_part, "{", tail_part, "}"; color=IDENT_COLOR)
         end
-    elseif expr.head == CALL || expr.head == ASSIGN || expr.head == RETURN
-        print_indent("(", expr.head, " ")
+    elseif expr.head == CALL || expr.head == ASSIGN 
+        bracket_color = gen_bracket_color(indent)
+        print_indent("(", color=bracket_color)
+        print_noindent(expr.head, " ", color=KEYWORDS_COLOR)
         print_noindent(expr.args[1])
         for arg in expr.args[2:end]
-            print_noindent(" ", arg)
+            if isa(arg, Expr)
+                space()
+                show_expr(io, arg, indent=0)
+            elseif isa(arg, String)
+                print_noindent(" ", "\"", arg, "\"", color=STRING_COLOR)
+            else
+                print_noindent(" ", arg, color=DEFAULT_COLOR)
+            end
         end
-        print_noindent(")")
+        print_noindent(")", color=bracket_color)
     elseif expr.head == FUNCTION
-        print_indent("(FUNCTION")
+        bracket_color = gen_bracket_color(indent)
+        print_indent("(", color=bracket_color)
+        print_noindent("FUNCTION", color=KEYWORDS_COLOR)
         newline()
-        print_subindent(expr.args[1])         # Function name
+        print_subindent(expr.args[1], color=KEYWORDS_COLOR)# Function name
         newline()
-        show_expr(io, expr.args[2]; indent=indent + 1) # Formal arguments
+        show_expr(io, expr.args[2], indent=indent + 1) # Formal arguments
         newline()
-        show_expr(io, expr.args[3]; indent=indent + 1) # Body
+        show_expr(io, expr.args[3], indent=indent + 1) # Body
         newline()
-        print_indent(")")
+        print_indent(")", color=bracket_color)
     else
-        print_indent("(")
-        print_noindent(expr.head)
+        bracket_color = gen_bracket_color(indent)
+        print_indent("(", color=bracket_color)
+        print_noindent(expr.head, color=KEYWORDS_COLOR)
         newline()
         for arg in expr.args
+            (expr.head == PROGRAM) && (newline())
             if isa(arg, Expr)
-                show_expr(io, arg; indent=indent + 1)
+                show_expr(io, arg, indent=indent + 1)
             elseif isa(arg, String)
-                print_subindent("\"", arg, "\"")
+                print_subindent("\"", arg, "\"", color=STRING_COLOR)
             else
-                print_subindent(arg)
+                print_subindent(arg, color=DEFAULT_COLOR)
             end
             newline()
         end
-        print_indent(")")
+        print_indent(")", color=bracket_color)
     end
 end
 
 function Base.show(io::IO, expr::Expr)
-    show_expr(io, expr; indent=0)
+    show_expr(io, expr, indent=0)
 end
 
 function Base.show(io::IO, ident::Ident)
-    print(io, "`", ident.name, "`")
+    printstyled(io, ident.name, color=IDENT_COLOR)
 end
 
 
