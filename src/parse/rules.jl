@@ -132,7 +132,7 @@ using PEG
 
 @rule expr = call, relational
 
-@rule statement = _function, assign, _if, _while, seq, expr
+@rule statement = _return, _function, assign, _if, _while, seq, expr
 
 @rule program = statement[*] |> build_program
 
