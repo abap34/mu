@@ -1,5 +1,6 @@
 using mu.MuCore
 using mu.MuCore.MuAST: ASSIGN, BLOCK, CALL, IF, IFELSE, WHILE
+using Glob
 
 parseerror() = iserror(expectederror=Base.Meta.ParseError)
 
@@ -168,7 +169,10 @@ testcases = Dict(
         )),
         ("{ }", MuCore.seq) => (isequal(
             MuCore.MuAST.Expr(BLOCK, [])
-        )),], "if" => [
+        )),
+    ], 
+    
+    "if" => [
         #
         # if 文
         #
@@ -211,53 +215,7 @@ testcases = Dict(
                 MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("b"), 2])
             ])
         )),
-    ], 
-    
-    "program" => [
-
-        #
-        # program (ソース全体). 例として少し複雑なサンプル
-        #
-        (
-            """
-            x = read_as_int()
-            y = x + 10
-
-            a = [1, 2, 3]
-            b = [4, 5, 6]
-
-            c = stack(a, b)
-
-            print(c)
-
-
-            if (x == 34){ 
-                print("Bonus!")
-                z = z + 3.4
-            } else { 
-                print("Penalty!")
-                z = z - 34
-            }
-
-
-            while (y > 0){
-                y = y - read_as_int()
-                
-                if (y % 2 == 0){
-                    x = x / 2
-                } else {
-                    x = x + 1
-                }
-            }
-
-            """,
-            MuCore.program
-        ) =>
-            begin
-                # 一旦パースエラーにならないことだけをチェック
-                ast -> !isa(ast, Exception)
-            end,
-    ],
+    ],     
 )
 
 function check(src::String, rule::Function, checker::Function)
@@ -281,6 +239,20 @@ end
         @testset "$testset_name" begin
             for ((src, rule), checker) in testcases
                 check(src, rule, checker)
+            end
+        end
+    end
+
+    @testset "Parse parsetest/*.mu" begin
+        for file in Glob.glob("parsetest/*.mu")
+            @info "Parsing: $file"
+            src = read(file, String)
+            try 
+                ast = MuCore.parse(src)
+                @test true
+            catch e
+                @info "Failed to parse: $file"
+                @test false
             end
         end
     end
