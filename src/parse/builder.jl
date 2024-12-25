@@ -27,12 +27,6 @@ build_float(w::AbstractArray) = build_float(recjoin(w))
 
 
 function build_ident(w)
-    if w == "true"
-        return true
-    elseif w == "false"
-        return false
-    end
-
     return MuAST.Ident(String(w[2]))
 end
 
