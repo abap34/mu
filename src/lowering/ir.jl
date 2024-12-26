@@ -12,6 +12,7 @@ import ..MuAST
     GOTO
     GOTOIFNOT
     LABEL
+    RETURN
 end
 
 struct Instr
@@ -42,6 +43,8 @@ function Base.show(io::IO, instr::Instr)
         print(io, "GOTO #", instr.expr.args[1], " IF NOT ", instr.expr.args[2])
     elseif instr.irtype == LABEL
         print(io, "LABEL #", instr.expr.args[1])
+    elseif instr.irtype == RETURN
+        print(io, "RETURN ", instr.expr.args[1])
     else
         print(io, "#### Unknown IRType ####")
     end
