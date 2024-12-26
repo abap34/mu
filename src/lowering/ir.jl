@@ -1,6 +1,7 @@
 module MuIR
 
 using Printf
+import Base
 
 import ..MuAST
 
@@ -16,6 +17,18 @@ end
 struct Instr
     irtype::IRType    
     expr::MuAST.Expr
+    typing::Union{Nothing, MuAST.Expr}
+    function Instr(irtype::IRType, expr::MuAST.Expr; typing::Nothing=nothing)
+        new(irtype, expr, typing)
+    end
+end
+
+function Instr(irtype::IRType, expr::MuAST.Expr, typing::MuAST.Expr)
+    if typing.head != MuAST.TYPE
+        throw(ArgumentError("Typing must be `Expr(TYPE, ...)`. Got $(typing)"))
+    end
+
+    return Instr(irtype, expr, typing)
 end
 
 function Base.show(io::IO, instr::Instr)
