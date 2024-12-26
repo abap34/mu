@@ -48,10 +48,15 @@ function Base.show(io::IO, instr::Instr)
     else
         print(io, "#### Unknown IRType ####")
     end
+
+    if !(isnothing(instr.typing))
+        printstyled(io, "::", instr.typing, color=:green)
+    else
+        printstyled(io, "::_", color=:light_black)
+    end
 end
 
 
-const IR = Vector{Instr}
 # Representation of program after lowering.
 struct IR
     instrs::Vector{Instr}
@@ -84,13 +89,33 @@ function Base.append!(ir::IR, ir2::IR)
 end
 
 function Base.show(io::IO, ir::IR)
-    println(io, "Untyped IR:")
-    idx_width = max(length(string(length(ir))), 6)
-    type_width = maximum(x -> length(string(x)), instr.irtype for instr in ir)
-    println(io, @sprintf("| %*s | %-*s | %s", idx_width, "idx", type_width, "type", "instr"))
-    println(io, "| ", "-"^idx_width, " | ", "-"^type_width, " | ", "-"^20)
-    for (idx, instr) in enumerate(ir)
-        println(io, @sprintf("| %*d | %-*s | %s", idx_width, idx, type_width, instr.irtype, instr))
+    instrs = ir.instrs
+
+    idx_width = max(ndigits(length(instrs)), 3)
+
+    # If there is no typing information(=== nothing), show "_".
+    typing_formatted = String[isnothing(instr.typing) ? "_" : string(instr.typing) for instr in instrs]
+
+    irtype_width = max(maximum(x -> length(string(x.irtype)), instr for instr in instrs), 10)
+    typing_width = max(maximum(x -> length(x), typing_formatted), 10)
+
+    println(io, "| ", lpad("idx", idx_width), " | ", lpad("irtype", irtype_width), " | instr")
+    println(io, "| ", "-"^idx_width, " | ", "-"^irtype_width, " | ", "-"^40)
+
+    for (idx, instr) in enumerate(instrs)
+        println(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.irtype), irtype_width),  " | ", instr)
+    end
+end
+
+ function Base.show(io::IO, codeinfo::CodeInfo)
+    println(io, "function ", codeinfo.name, "(", codeinfo.args, ")")
+    println(io, codeinfo.ir)
+    println(io, "end")
+end
+
+function Base.show(io::IO, program::Vector{CodeInfo})
+    for codeinfo in program
+        show(io, codeinfo)
     end
 end
 
