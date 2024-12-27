@@ -37,9 +37,9 @@ const Literal = Union{Int,Float64,String,Bool,Array}
     BLOCK      # Block to group multiple expressions
 
     FUNCTION   # For function definition
-    FORMALARGS # | Formal arguments for function definition
-    TYPEDIDENT # |  TYPEDIDENT for function formal arguments 
-    TYPE       # |  Type parameter  e.g. `Array{T, N}`             
+    FORMALARGS # |  Formal arguments for function definition
+    TYPEDIDENT # |  Typed identifier. e.g. `a::Array{Int, 2}`
+    TYPE       # |  Type. e.g. `Array{Int, 2}`
     RETURN     # |  Return statement
 
     GOTO         #  Goto label without condition        |
