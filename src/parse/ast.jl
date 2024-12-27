@@ -49,7 +49,7 @@ end
 
 struct Expr <: AbstractSyntaxNode
     head::ExprHead
-    args::Vector{Any} # It is not avoidable to use Any here
+    args::Vector{AbstractSyntaxNode} # It is not avoidable to use Any here
 end
 
 const IDENT_WIDTH = 4
