@@ -4,12 +4,16 @@ function get_builtin(f::String)
     if haskey(builtins, f)
         return builtins[f]
     else
-        throw("Unknown builtin: $f")
+        Base.throw("Unknown builtin: $f")
     end
 end
 
+function builtinnames()
+    return keys(builtins)
+end
 
-builtins = Dict{String, Function}()
+
+builtins = Dict{String,Function}()
 
 macro builtin(ex)
     f = string(ex.args[1].args[1])
@@ -18,71 +22,55 @@ macro builtin(ex)
     end |> esc
 end
 
-@builtin function add(args::AbstractArray, env::Dict{String,Any})
-    return args[1] + args[2]
-end
 
-@builtin function sub(args::AbstractArray, env::Dict{String,Any})
-    return args[1] - args[2]
-end
+@builtin typeof(args::AbstractArray, env::Dict{String, Any}) = Base.typeof(args[1])
+@builtin throw(args::AbstractArray, env::Dict{String, Any}) = Base.throw(args[1])
 
-@builtin function mul(args::AbstractArray, env::Dict{String,Any})
-    return args[1] * args[2]
-end
+@builtin add_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] + args[2]
+@builtin add_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] + args[2]
+@builtin add_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] + args[2]
+@builtin add_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] + args[2]
+@builtin div_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] / args[2]
+@builtin div_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] / args[2]
+@builtin div_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] / args[2]
+@builtin div_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] / args[2]
+@builtin gt_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] > args[2]
+@builtin gt_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] > args[2]
+@builtin gt_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] > args[2]
+@builtin gt_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] > args[2]
+@builtin le_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] <= args[2]
+@builtin le_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] <= args[2]
+@builtin le_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] <= args[2]
+@builtin le_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] <= args[2]
+@builtin lt_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] < args[2]
+@builtin lt_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] < args[2]
+@builtin lt_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] < args[2]
+@builtin lt_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] < args[2]
+@builtin mod_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] % args[2]
+@builtin mod_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] % args[2]
+@builtin mod_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] % args[2]
+@builtin mod_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] % args[2]
+@builtin mul_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] * args[2]
+@builtin mul_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] * args[2]
+@builtin mul_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] * args[2]
+@builtin mul_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] * args[2]
+@builtin pow_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
+@builtin pow_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
+@builtin pow_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
+@builtin pow_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
+@builtin sub_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] - args[2]
+@builtin sub_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] - args[2]
+@builtin sub_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] - args[2]
+@builtin sub_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] - args[2]
 
-@builtin function div(args::AbstractArray, env::Dict{String,Any})
-    return args[1] / args[2]
-end
 
-@builtin function mod(args::AbstractArray, env::Dict{String,Any})
-    return args[1] % args[2]
-end
+@builtin parse_int(args::AbstractArray, env::Dict{String,Any}) = Base.parse(Int, args[1])
+@builtin parse_float(args::AbstractArray, env::Dict{String,Any}) = Base.parse(Float64, args[1])
 
-@builtin function eq(args::AbstractArray, env::Dict{String,Any})
-    return args[1] == args[2]
-end
+@builtin print(args::AbstractArray, env::Dict{String,Any}) = Base.println(args...)
+@builtin readline(args::AbstractArray, env::Dict{String,Any}) = Base.readline()
 
-@builtin function neq(args::AbstractArray, env::Dict{String,Any})
-    return args[1] != args[2]
-end
 
-@builtin function lt(args::AbstractArray, env::Dict{String,Any})
-    return args[1] < args[2]
-end
 
-@builtin function gt(args::AbstractArray, env::Dict{String,Any})
-    return args[1] > args[2]
-end
-
-@builtin function le(args::AbstractArray, env::Dict{String,Any})
-    return args[1] <= args[2]
-end
-
-@builtin function ge(args::AbstractArray, env::Dict{String,Any})
-    return args[1] >= args[2]
-end
-
-@builtin function read_as_int(args::AbstractArray, env::Dict{String,Any})
-    Base.print("read_as_int> ")
-    result = Base.parse(Int, readline())
-    println()
-    return result
-end
-
-@builtin function stack(args::AbstractArray, env::Dict{String,Any})
-    return Base.stack(args)
-end
-
-@builtin function print(args::AbstractArray, env::Dict{String,Any})
-    Base.println(args...)
-end
-
-@builtin function print_env(args::AbstractArray, env::Dict{String,Any})
-    Base.println(env)
-end
-
-@builtin function exit(args::AbstractArray, env::Dict{String,Any})
-    Base.exit(args[1])
-end
 
 end # module MuBuiltins
