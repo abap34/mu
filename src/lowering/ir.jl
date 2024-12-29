@@ -7,12 +7,11 @@ import ..MuAST
 
 
 @enum IRType begin
-    CALL
-    ASSIGN
-    GOTO
-    GOTOIFNOT
-    LABEL
-    RETURN
+    ASSIGN           # Assignment
+    GOTO             # Goto label without condition
+    GOTOIFNOT        # Goto label if condition is false.  
+    LABEL            # Label for goto
+    RETURN           # Return statement
 end
 
 struct Instr
@@ -33,9 +32,7 @@ function Instr(irtype::IRType, expr::MuAST.Expr, typing::MuAST.Expr)
 end
 
 function Base.show(io::IO, instr::Instr)
-    if instr.irtype == CALL
-        print(io, instr.expr.args[1].name, "(", join(instr.expr.args[2:end], ", "), ")")
-    elseif instr.irtype == ASSIGN
+    if instr.irtype == ASSIGN
         print(io, instr.expr.args[1].name, " = ", instr.expr.args[2])
     elseif instr.irtype == GOTO
         print(io, "GOTO #", instr.expr.args[1])
@@ -121,7 +118,9 @@ end
     println(io, "end")
 end
 
-function Base.show(io::IO, program::Vector{CodeInfo})
+const ProgramIR = Vector{CodeInfo}
+
+function Base.show(io::IO, program::ProgramIR)
     for codeinfo in program
         show(io, codeinfo)
     end
