@@ -1,17 +1,17 @@
-mutable struct NaiveInterpreter 
-    env::Dict{String, Any}
-    label_to_pc::Dict{Int, Int}
-    function NaiveInterpreter()
-        new(Dict{String, Any}(), Dict{Int, Int}())
+mutable struct ConcreateInterpreter
+    env::Dict{String,Any}
+    label_to_pc::Dict{Int,Int}
+    function ConcreateInterpreter()
+        new(Dict{String,Any}(), Dict{Int,Int}())
     end
 end
 
-function run_builtin!(f::String, args::AbstractArray, interp::NaiveInterpreter)
+function run_builtin!(f::String, args::AbstractArray, interp::ConcreateInterpreter)
     return MuBuiltins.get_builtin(f)(args, interp.env)
 end
 
-function run_expr(expr::MuAST.Expr, interp::NaiveInterpreter)
-    if expr.head == MuAST.CALL
+function run_expr(expr::MuAST.Expr, interp::ConcreateInterpreter)
+    if expr.head == MuAST.GCALL
         f, args... = expr.args
         builtin_args = run_expr.(args, Ref(interp))
         return run_builtin!(f.name, builtin_args, interp)
@@ -20,15 +20,15 @@ function run_expr(expr::MuAST.Expr, interp::NaiveInterpreter)
     end
 end
 
-function run_expr(expr::MuAST.Literal, interp::NaiveInterpreter)
+function run_expr(expr::MuAST.Literal, interp::ConcreateInterpreter)
     return expr
 end
 
-function run_expr(ident::MuAST.Ident, interp::NaiveInterpreter)
+function run_expr(ident::MuAST.Ident, interp::ConcreateInterpreter)
     return interp.env[ident.name]
 end
 
-function execute!(instr::MuIR.Instr, interp::NaiveInterpreter, pc::Int)
+function execute!(instr::MuIR.Instr, interp::ConcreateInterpreter, pc::Int)
     if instr.irtype == MuIR.ASSIGN
         ident, rhs = instr.expr.args
 
@@ -38,7 +38,7 @@ function execute!(instr::MuIR.Instr, interp::NaiveInterpreter, pc::Int)
 
     elseif instr.irtype == MuIR.GOTO
         return interp.label_to_pc[instr.expr.args[1]]
-    
+
     elseif instr.irtype == MuIR.GOTOIFNOT
         label, cond = instr.expr.args
 
@@ -53,7 +53,7 @@ function execute!(instr::MuIR.Instr, interp::NaiveInterpreter, pc::Int)
 end
 
 
-function interpret(ir::MuIR.IR, interp::NaiveInterpreter)
+function interpret(ir::MuIR.IR, interp::ConcreateInterpreter)
     for (pc, instr) in enumerate(ir)
         if instr.irtype == MuIR.LABEL
             interp.label_to_pc[instr.expr.args[1]] = pc
@@ -61,17 +61,17 @@ function interpret(ir::MuIR.IR, interp::NaiveInterpreter)
     end
 
     pc = 1
-    
+
     while pc <= length(ir)
         instr = ir[pc]
-        try 
+        try
             pc = execute!(instr, interp, pc)
         catch e
             println("Failed to interpret: $instr")
             throw(e)
         end
     end
-    
+
     return nothing
 end
 

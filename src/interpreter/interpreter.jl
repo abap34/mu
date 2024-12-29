@@ -6,10 +6,10 @@ import ..MuIR
 
 abstract type AbstractInterpreter end
 
-include("naiveinterpreter.jl")
+include("concreate_interpreter.jl")
 
 function interpret(ir::MuIR.IR)
-    interpret(ir, NaiveInterpreter())
+    interpret(ir, ConcreateInterpreter())
 end
 
 
