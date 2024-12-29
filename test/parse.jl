@@ -139,6 +139,28 @@ testcases = Dict(
         ("foo_bar = read_as_int()", MuCore.assign) => (isequal(
             MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("foo_bar"), MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("read_as_int")])])
         )),
+
+        ("(1 + 2) * 3", MuCore.mul) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2]), 3])
+        )),
+        ("1 + (2 * 3)", MuCore.add) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 2, 3])])
+        )),
+        ("(1 + 2) * (3 + 4)", MuCore.mul) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2]), 
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 3, 4])])
+        )),
+        ("(1 + 2) * 3", MuCore.mul) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2]), 3])
+        )),
+        ("1 + (2 * 3)", MuCore.add) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 2, 3])])
+        ))
     ], 
     
     "GCALL" => [
