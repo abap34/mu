@@ -88,7 +88,7 @@ function build_assign(w::AbstractArray)
 end
 
 
-function build_call(w::AbstractArray)
+function build_generics_call(w::AbstractArray)
     name = w[1]
     args = w[3][1]
     if isempty(args)

@@ -45,7 +45,7 @@ using PEG
 
 
 @rule primary = (
-    call,
+    generics_call,
     literal,
     ident, 
     array,
@@ -85,9 +85,9 @@ using PEG
 ) |> build_actual_args
 
 
-@rule call = (
+@rule generics_call = (
     ident & r"\("p & actual_args[:?] & r"\)"p
-) |> build_call
+) |> build_generics_call
 
 @rule builtin_call = (
     "@" & ident & r"\("p & actual_args[:?] & r"\)"p
@@ -136,7 +136,7 @@ using PEG
 
 
 
-@rule expr = builtin_call, call, and_or
+@rule expr = builtin_call, generics_call, and_or
 
 @rule statement = _return, _function, assign, _if, _while, seq, expr
 
