@@ -64,7 +64,7 @@ end
 function build_unary(w::AbstractArray)
     op, expr = w
     if op == ["-"]
-        return MuAST.Expr(MuAST.CALL, [MuAST.Ident("sub"), expr])
+        return MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), expr])
     else
         return expr
     end
@@ -75,7 +75,7 @@ function build_binop(w::AbstractArray)
     lhs = w[1]
     for ex in w[2]
         op, rhs = ex
-        lhs = MuAST.Expr(MuAST.CALL, [MuAST.Ident(OP_MAP[op]), lhs, rhs])
+        lhs = MuAST.Expr(MuAST.GCALL, [MuAST.Ident(OP_MAP[op]), lhs, rhs])
     end
     return lhs
 end
@@ -92,9 +92,18 @@ function build_call(w::AbstractArray)
     name = w[1]
     args = w[3][1]
     if isempty(args)
-        return MuAST.Expr(MuAST.CALL, [name])
+        return MuAST.Expr(MuAST.GCALL, [name])
     end
-    return MuAST.Expr(MuAST.CALL, [name, args...])
+    return MuAST.Expr(MuAST.GCALL, [name, args...])
+end
+
+function build_builtin_call(w::AbstractArray)
+    name = w[2]
+    args = w[4][1]
+    if isempty(args)
+        return MuAST.Expr(MuAST.BCALL, [name])
+    end
+    return MuAST.Expr(MuAST.BCALL, [name, args...])
 end
 
 
