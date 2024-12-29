@@ -68,7 +68,7 @@ using PEG
 
 
 @rule relational = (
-    add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p, ) & add)[*]
+    add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p) & add)[*]
 ) |> build_binop
 
 @rule and_or = (
@@ -89,6 +89,9 @@ using PEG
     ident & r"\("p & actual_args[:?] & r"\)"p
 ) |> build_call
 
+@rule builtin_call = (
+    "@" & ident & r"\("p & actual_args[:?] & r"\)"p
+) |> build_builtin_call
 
 @rule seq = (
     r"\{"p & statement[*] & r"\}"p
@@ -133,8 +136,7 @@ using PEG
 
 
 
-@rule expr = call, relational
-@rule expr = call, and_or
+@rule expr = builtin_call, call, and_or
 
 @rule statement = _return, _function, assign, _if, _while, seq, expr
 
