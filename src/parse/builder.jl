@@ -61,6 +61,10 @@ function build_matrix(w::AbstractArray)
     end
 end
 
+function build_grouped_expr(w::AbstractArray)
+    return w[2]
+end
+
 function build_unary(w::AbstractArray)
     op, expr = w
     if op == ["-"]

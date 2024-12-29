@@ -43,8 +43,12 @@ using PEG
     r"\["p & array_contents & (r";"p & array_contents)[*] & r"\]"p
 ) |> build_matrix
 
+@rule grouped_expr = (
+    r"\("p & expr & r"\)"p
+) |> build_grouped_expr
 
 @rule primary = (
+    grouped_expr,
     generics_call,
     literal,
     ident, 
@@ -68,11 +72,7 @@ using PEG
 
 
 @rule relational = (
-    add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p) & add)[*]
-) |> build_binop
-
-@rule and_or = (
-    relational & ((r"&&"p, r"\|\|"p) & relational)[*]
+    add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p, r"&&"p, r"||"p) & add)[*]
 ) |> build_binop
 
 @rule assign = (
@@ -136,7 +136,7 @@ using PEG
 
 
 
-@rule expr = builtin_call, generics_call, and_or
+@rule expr = builtin_call, generics_call, relational
 
 @rule statement = _return, _function, assign, _if, _while, seq, expr
 
