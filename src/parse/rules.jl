@@ -72,7 +72,7 @@ using PEG
 
 
 @rule relational = (
-    add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p, r"&&"p, r"||"p) & add)[*]
+    add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p, r"&&"p, r"\|\|"p) & add)[*]
 ) |> build_binop
 
 @rule assign = (
