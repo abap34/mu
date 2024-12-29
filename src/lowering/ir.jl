@@ -97,12 +97,7 @@ function Base.show(io::IO, ir::IR)
     instrs = ir.instrs
 
     idx_width = max(ndigits(length(instrs)), 3)
-
-    # If there is no typing information(=== nothing), show "_".
-    typing_formatted = String[isnothing(instr.typing) ? "_" : string(instr.typing) for instr in instrs]
-
     irtype_width = max(maximum(x -> length(string(x.irtype)), instr for instr in instrs), 10)
-    typing_width = max(maximum(x -> length(x), typing_formatted), 10)
 
     println(io, "| ", lpad("idx", idx_width), " | ", lpad("irtype", irtype_width), " | instr")
     println(io, "| ", "-"^idx_width, " | ", "-"^irtype_width, " | ", "-"^40)
