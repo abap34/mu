@@ -1,5 +1,5 @@
 using mu.MuCore
-using mu.MuCore.MuAST: ASSIGN, BLOCK, CALL, IF, IFELSE, WHILE
+import mu.MuCore.MuAST
 using Glob
 
 parseerror() = iserror(expectederror=Base.Meta.ParseError)
@@ -61,8 +61,8 @@ testcases = Dict(
         # 単項演算
         #
         ("1.0", MuCore.unary) => (isequal(1.0)),
-        ("-1.234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), 1.234]))),
-        ("-1234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), 1234]))),
+        ("-1.234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), 1.234]))),
+        ("-1234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), 1234]))),
         ("1", MuCore.unary) => (isequal(1)),
         ("\"hello\"", MuCore.unary) => (isequal("hello")),
         ("true", MuCore.unary) => (isequal(true)),
@@ -73,10 +73,10 @@ testcases = Dict(
         ("if", MuCore.unary) => (iserror()),
         ("true", MuCore.unary) => (isequal(true)),
         ("1 + 2", MuCore.add) => (isequal(
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("add"), 1, 2])
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2])
         )),
         ("-read_as_int()", MuCore.unary) => (isequal(
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("read_as_int")])])
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("read_as_int")])])
         )),
     ], 
     
@@ -86,89 +86,108 @@ testcases = Dict(
         #
         ("1 + 2 + 3", MuCore.add) => begin
             # 1 + 2 + 3 は (1 + 2) + 3 という左結合
-            lhs = MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("add"), 1, 2])
+            lhs = MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2])
             rhs = 3
-            isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("add"), lhs, rhs]))
+            isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), lhs, rhs]))
         end,
         ("a - b - c", MuCore.add) => begin
             # (a - b) - c
-            lhs = MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"),
+            lhs = MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"),
                 MuCore.MuAST.Ident("a"), MuCore.MuAST.Ident("b")])
             rhs = MuCore.MuAST.Ident("c")
-            isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), lhs, rhs]))
+            isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), lhs, rhs]))
         end,
 
         #
         # mul
         #
         ("2 * 3", MuCore.mul) => (isequal(
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("mul"), 2, 3])
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 2, 3])
         )),
         ("a * b / c", MuCore.mul) => begin
             # a * b / c は左結合: (a*b)/c
-            lhs = MuCore.MuAST.Expr(CALL, [
+            lhs = MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [
                 MuCore.MuAST.Ident("mul"),
                 MuCore.MuAST.Ident("a"),
                 MuCore.MuAST.Ident("b")
             ])
             rhs = MuCore.MuAST.Ident("c")
-            isequal(MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("div"), lhs, rhs]))
+            isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("div"), lhs, rhs]))
         end,
 
         #
         # relational
         #
         ("1 < 2", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("lt"), 1, 2])
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("lt"), 1, 2])
         )),
         ("x == y", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("eq"),
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("eq"),
                 MuCore.MuAST.Ident("x"), MuCore.MuAST.Ident("y")])
         )),
         ("10 != 20", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("neq"), 10, 20])
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("neq"), 10, 20])
         )),
 
         #
         # assign
         #
         ("x = 123", MuCore.assign) => (isequal(
-            MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("x"), 123])
+            MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("x"), 123])
         )),
         ("x+1 = y", MuCore.assign) => (parseerror()),
         ("foo_bar = read_as_int()", MuCore.assign) => (isequal(
-            MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("foo_bar"), MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("read_as_int")])])
+            MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("foo_bar"), MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("read_as_int")])])
         )),
     ], 
     
-    "call" => [
+    "GCALL" => [
         #
-        # call (引数あり・なし)
+        # MuCore.MuAST.GCALL (引数あり・なし)
         #
-        ("foo()", MuCore.call) => (isequal(
+        ("foo()", MuCore.generics_call) => (isequal(
             # 引数なし
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("foo")])
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("foo")])
         )),
-        ("bar(1, 2)", MuCore.call) => (isequal(
-            MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("bar"), 1, 2])
+        ("bar(1, 2)", MuCore.generics_call) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("bar"), 1, 2])
         )),
-        ("foo(bar())", MuCore.call) => (isequal(
-            MuCore.MuAST.Expr(CALL, [
+        ("foo(bar())", MuCore.generics_call) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [
                 MuCore.MuAST.Ident("foo"),
-                MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("bar")])
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("bar")])
             ])
         ))
     ], 
+
+    "BCALL" => [
+        #
+        # BCALL (引数あり・なし)
+        #
+        ("@foo()", MuCore.builtin_call) => (isequal(
+            # 引数なし
+            MuCore.MuAST.Expr(MuCore.MuAST.BCALL, [MuCore.MuAST.Ident("foo")])
+        )),
+        ("@bar(1, 2)", MuCore.builtin_call) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.BCALL, [MuCore.MuAST.Ident("bar"), 1, 2])
+        )),
+        ("@foo(bar())", MuCore.builtin_call) => (isequal(
+            MuCore.MuAST.Expr(MuCore.MuAST.BCALL, [
+                MuCore.MuAST.Ident("foo"),
+                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("bar")])
+            ])
+        ))
+    ],
     
     "seq" => [
         #
         # seq (複数 expr)
         #
         ("{ 1 2 3 }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(BLOCK, [1, 2, 3])
+            MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [1, 2, 3])
         )),
         ("{ }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(BLOCK, [])
+            MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [])
         )),
     ], 
     
@@ -177,19 +196,19 @@ testcases = Dict(
         # if 文
         #
         ("if(1){2}", MuCore._if) => (isequal(
-            MuCore.MuAST.Expr(IF, [
+            MuCore.MuAST.Expr(MuCore.MuAST.IF, [
                 1,
-                MuCore.MuAST.Expr(BLOCK, [2]),
+                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [2]),
             ])
         )),
         ("if(x){ y=1 } else { y=3 }", MuCore._if) => isequal(
-            MuCore.MuAST.Expr(IFELSE, [
+            MuCore.MuAST.Expr(MuCore.MuAST.IFELSE, [
                 MuCore.MuAST.Ident("x"),
-                MuCore.MuAST.Expr(BLOCK, [
-                    MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("y"), 1])
+                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
+                    MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("y"), 1])
                 ]),
-                MuCore.MuAST.Expr(BLOCK, [
-                    MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("y"), 3])
+                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
+                    MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("y"), 3])
                 ])
             ]
             )
@@ -202,17 +221,17 @@ testcases = Dict(
         # while 文
         #
         ("while(x){ x = x - 1 }", MuCore._while) => (isequal(
-            MuCore.MuAST.Expr(WHILE, [
+            MuCore.MuAST.Expr(MuCore.MuAST.WHILE, [
                 MuCore.MuAST.Ident("x"),
-                MuCore.MuAST.Expr(BLOCK, [
-                    MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("x"), MuCore.MuAST.Expr(CALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Ident("x"), 1])])
+                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
+                    MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("x"), MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Ident("x"), 1])])
                 ])
             ])
         )),
         ("{ a=1 b=2 }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(BLOCK, [
-                MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("a"), 1]),
-                MuCore.MuAST.Expr(ASSIGN, [MuCore.MuAST.Ident("b"), 2])
+            MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
+                MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("a"), 1]),
+                MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("b"), 2])
             ])
         )),
     ],     
