@@ -10,6 +10,8 @@ OP_MAP = Dict(
     ">" => "gt",
     "<=" => "le",
     ">=" => "ge",
+    "&&" => "and",
+    "||" => "or",
 )
 
 recjoin(arr::AbstractArray) = join(recjoin.(arr))
