@@ -88,6 +88,14 @@ function Base.append!(ir::IR, ir2::IR)
     append!(ir.instrs, ir2.instrs)
 end
 
+function Base.iterate(ir::IR)
+    return iterate(ir.instrs)
+end
+
+function Base.iterate(ir::IR, state)
+    return iterate(ir.instrs, state)
+end
+
 function Base.show(io::IO, ir::IR)
     instrs = ir.instrs
 
