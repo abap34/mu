@@ -26,7 +26,8 @@ const UNUSED_IDENT = Ident("_")
 const Literal = Union{Int,Float64,String,Bool,Array}
 
 @enum ExprHead begin
-    CALL       # Function call
+    GCALL # Generic function call
+    BCALL # Builtin function call
     ASSIGN     # Assignment
 
     IFELSE     # If-else statement
@@ -94,18 +95,6 @@ function show_expr(io::IO, expr::Expr; indent::Int=0)
     elseif expr.head == TYPEDIDENT
         print_noindent(expr.args[1], "::", color=KEYWORDS_COLOR)
         show_expr(io, expr.args[2], indent=indent + 1)
-    elseif expr.head == RETURN
-        bracket_color = gen_bracket_color(indent)
-        print_indent("(", color=bracket_color)
-        print_noindent("RETURN", color=KEYWORDS_COLOR)
-        if isa(expr.args[1], Expr)
-            show_expr(io, expr.args[1], indent=indent + 1)
-        elseif isa(expr.args[1], String)
-            print_noindent(" ", "\"", expr.args[1], "\"", color=STRING_COLOR)
-        else
-            print_noindent(" ", expr.args[1], color=DEFAULT_COLOR)
-        end
-        print_noindent(")", color=bracket_color)
     elseif expr.head == TYPE
         if length(expr.args) == 1  # No type parameter
             if isa(expr.args[1], Expr)
@@ -118,7 +107,7 @@ function show_expr(io::IO, expr::Expr; indent::Int=0)
             tail_part = join(expr.args[2:end], ", ") # e.g. {Int, 2}
             print_noindent(head_part, "{", tail_part, "}"; color=IDENT_COLOR)
         end
-    elseif expr.head == CALL || expr.head == ASSIGN 
+    elseif expr.head == ASSIGN || expr.head == GCALL || expr.head == BCALL || expr.head == RETURN
         bracket_color = gen_bracket_color(indent)
         print_indent("(", color=bracket_color)
         print_noindent(expr.head, " ", color=KEYWORDS_COLOR)
