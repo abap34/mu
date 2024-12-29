@@ -71,6 +71,9 @@ using PEG
     add & ((r"<="p, r">="p, r"<"p, r">"p, r"=="p, r"!="p, ) & add)[*]
 ) |> build_binop
 
+@rule and_or = (
+    relational & ((r"&&"p, r"\|\|"p) & relational)[*]
+) |> build_binop
 
 @rule assign = (
     ident & r"="p & expr
@@ -131,6 +134,7 @@ using PEG
 
 
 @rule expr = call, relational
+@rule expr = call, and_or
 
 @rule statement = _return, _function, assign, _if, _while, seq, expr
 
