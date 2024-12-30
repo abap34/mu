@@ -106,4 +106,12 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, signature::Vector{M
             return id
         end
     end
-endend
+end
+
+function body_by_id(methodtable::MethodTable, id::Int)
+    if !haskey(methodtable.id_to_body, id)
+        throw(ArgumentError("Method with id $id not found in method table."))
+    end
+
+    return methodtable.id_to_body[id]
+end
