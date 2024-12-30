@@ -1,77 +1,181 @@
-mutable struct ConcreateInterpreter
-    env::Dict{String,Any}
-    label_to_pc::Dict{Int,Int}
+include("methodtable.jl")
+
+struct Env
+    bindings::Dict{String,Any}
+    function Env()
+        new(Dict{String,Any}())
+    end
+end
+
+mutable struct Frame
+    method_id::Int          # Method id
+    pc::Int         # Program counter
+    env::Env        # Environment
+    function Frame(id::Int, pc::Int, env::Env)
+        new(id, pc, env)
+    end
+end
+
+function bind!(frame::Frame, name::String, value::Any)
+    frame.env.bindings[name] = value
+end
+
+function lookup(frame::Frame, name::String)
+    return frame.env.bindings[name]
+end
+
+const CallStack = Vector{Frame}
+
+mutable struct ConcreateInterpreter <: AbstractInterpreter
+    # Method id -> label -> pc
+    label_to_pc::Dict{Int,Dict{Int,Int}}
+    methodtable::MethodTable
+    callstack::CallStack
     function ConcreateInterpreter()
-        new(Dict{String,Any}(), Dict{Int,Int}())
+        new(Dict{Int,Int}(), MethodTable(), CallStack())
     end
 end
 
-function run_builtin!(f::String, args::AbstractArray, interp::ConcreateInterpreter)
-    return MuBuiltins.get_builtin(f)(args, interp.env)
+function currentframe(interp::ConcreateInterpreter)
+    return interp.callstack[end]
 end
 
-function run_expr(expr::MuAST.Expr, interp::ConcreateInterpreter)
-    if expr.head == MuAST.GCALL
-        f, args... = expr.args
-        builtin_args = run_expr.(args, Ref(interp))
-        return run_builtin!(f.name, builtin_args, interp)
-    else
-        throw("Unkonwn expr type: $expr")
+function injection!(interp::ConcreateInterpreter, codeinfo::MuIR.CodeInfo)
+    # Register the method
+    add_method!(interp.methodtable, codeinfo)
+
+    # Calculate label to pc mapping
+    label_to_pc = interp.label_to_pc
+
+    for (id, _) in interp.methodtable.id_to_codeinfo
+        label_to_pc[id] = Dict{Int,Int}()
     end
+
+    for (idx, instr) in enumerate(codeinfo.ir)
+        if instr.irtype == MuIR.LABEL
+            label = instr.expr.args[1]
+            label_to_pc[codeinfo.id][label] = idx
+        end
+    end
+
+    interp.label_to_pc = label_to_pc
 end
 
-function run_expr(expr::MuAST.Literal, interp::ConcreateInterpreter)
+function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Literal)
     return expr
 end
 
-function run_expr(ident::MuAST.Ident, interp::ConcreateInterpreter)
-    return interp.env[ident.name]
+function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Ident)
+    return lookup(currentframe(interp), expr.name)
 end
 
-function execute!(instr::MuIR.Instr, interp::ConcreateInterpreter, pc::Int)
-    if instr.irtype == MuIR.ASSIGN
-        ident, rhs = instr.expr.args
+function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Expr)
+    if expr.head == MuAST.GCALL
+        f, args... = expr.args
 
-        interp.env[ident.name] = run_expr(rhs, interp)
+        @assert all(arg -> arg isa MuAST.Ident || arg isa MuAST.Literal, args) "Arguments must be LITERAL or IDENT. Got $(args)"
 
-        return pc + 1
+        argvalues = [execute_expr!(interp, arg) for arg in args]
 
-    elseif instr.irtype == MuIR.GOTO
-        return interp.label_to_pc[instr.expr.args[1]]
+        return call_generics!(interp, f, argvalues)
+    elseif expr.head == MuAST.BCALL
+        f, args... = expr.args
 
-    elseif instr.irtype == MuIR.GOTOIFNOT
-        label, cond = instr.expr.args
+        @assert all(arg -> arg isa MuAST.Ident || arg isa MuAST.Literal, args) "Arguments must be LITERAL or IDENT. Got $(args)"
 
-        if !run_expr(cond, interp)
-            return interp.label_to_pc[label]
+        argvalues = [execute_expr!(interp, arg) for arg in args]
+
+        return call_builtin!(interp, f, argvalues)
+    else
+        throw(ArgumentError("Unknown expression type: $(expr.head). Expected GCALL or BCALL"))
+    end
+end
+
+function call_generics!(interp::ConcreateInterpreter, name::MuAST.Ident, args::Vector{<:Any})
+    @assert all(arg -> arg isa MuAST.Ident || arg isa MuAST.Literal, args) "Arguments must be LITERAL or IDENT. Got $(args)"
+
+    argvalues = [execute_expr!(interp, arg) for arg in args]
+    argtypes = [MuTypes.typeof(arg) for arg in argvalues]
+    method_id = lookup(interp.methodtable, name, argtypes)
+
+    codeinfo = codeinfo_by_id(interp.methodtable, method_id)
+    formalargs = codeinfo.args
+
+    push!(interp.callstack, Frame(method_id, 1, Env()))
+
+    for (formal, arg) in zip(formalargs.args, argvalues)
+        @assert arg isa MuAST.Literal || arg isa MuAST.Ident "Argument must be Literal or Ident. Got $(arg.head)"
+        bind!(currentframe(interp), formal.args[1].name, arg)
+    end
+
+    result = interpret_local!(interp, codeinfo.ir)
+
+    pop!(interp.callstack)
+
+    return result
+end
+
+
+function call_builtin!(interp::ConcreateInterpreter, name::MuAST.Ident, args::Vector{<:Any})
+    MuBuiltins.get_builtin(name.name)(args, currentframe(interp).env.bindings)
+end
+
+
+function interpret_local!(interp::ConcreateInterpreter, ir::MuIR.IR)
+    frame = currentframe(interp)
+
+    while frame.pc <= length(ir)
+        instr = ir[frame.pc]
+        if instr.irtype == MuIR.ASSIGN
+            lhs, rhs = instr.expr.args
+            bind!(frame, lhs.name, execute_expr!(interp, rhs))
+            frame.pc += 1
+
+        elseif instr.irtype == MuIR.GOTO
+            frame.pc = interp.label_to_pc[frame.method_id][instr.expr.args[1]]
+
+        elseif instr.irtype == MuIR.GOTOIFNOT
+            label, cond = instr.expr.args
+
+
+            if !execute_expr!(interp, cond)
+                frame.pc = interp.label_to_pc[frame.method_id][label]
+            else
+                frame.pc += 1
+            end
+
+        elseif instr.irtype == MuIR.RETURN
+            return execute_expr!(interp, instr.expr.args[1])
+
+        elseif instr.irtype == MuIR.LABEL
+            frame.pc += 1
+
         else
-            return pc + 1
+            throw(ArgumentError("Unknown IRType: $(instr.irtype)"))
         end
-    elseif instr.irtype == MuIR.LABEL
-        return pc + 1
+
     end
+
+    throw(ArgumentError("End of IR reached. Expected RETURN"))
 end
 
 
-function interpret(ir::MuIR.IR, interp::ConcreateInterpreter)
-    for (pc, instr) in enumerate(ir)
-        if instr.irtype == MuIR.LABEL
-            interp.label_to_pc[instr.expr.args[1]] = pc
-        end
+function interpret(program::MuIR.ProgramIR, interp::ConcreateInterpreter; debug=false)
+    for f in program
+        injection!(interp, f)
     end
 
-    pc = 1
+    main_id = lookup(interp.methodtable, MuAST.Ident("main"), DataType[])
 
-    while pc <= length(ir)
-        instr = ir[pc]
-        try
-            pc = execute!(instr, interp, pc)
-        catch e
-            println("Failed to interpret: $instr")
-            throw(e)
-        end
-    end
+    push!(interp.callstack, Frame(main_id, 1, Env()))
 
-    return nothing
+    main_ir = codeinfo_by_id(interp.methodtable, main_id).ir
+
+    interpret_local!(interp, main_ir)
 end
+
+function interpret(program::MuIR.ProgramIR)
+    interpret(program, ConcreateInterpreter(); debug=false)
+end
+
 
