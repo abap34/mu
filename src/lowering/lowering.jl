@@ -118,7 +118,10 @@ function _lowering(expr::MuAST.Expr)
         cond_label_id = label_gen()
         end_label_id = label_gen()
 
-        pushgotoifnot!(ir, cond_label_id, cond)
+        cond_var = var_gen(cond)
+        add_subexpr!(cond, cond_var, ir)
+
+        pushgotoifnot!(ir, cond_label_id, cond_var)
         append!(ir, _lowering(body))
         pushgoto!(ir, end_label_id)
         pushlabel!(ir, cond_label_id)
@@ -138,8 +141,11 @@ function _lowering(expr::MuAST.Expr)
         cond, body = expr.args
 
         cond_label_id = label_gen()
+        
+        cond_var = var_gen(cond)
+        add_subexpr!(cond, cond_var, ir)
 
-        pushgotoifnot!(ir, cond_label_id, cond)
+        pushgotoifnot!(ir, cond_label_id, cond_var)
         append!(ir, _lowering(body))
         pushlabel!(ir, cond_label_id)
 
@@ -159,8 +165,11 @@ function _lowering(expr::MuAST.Expr)
         cond_label_id = label_gen()
         end_label_id = label_gen()
 
+        cond_var = var_gen(cond)
+        add_subexpr!(cond, cond_var, ir)
+
         pushlabel!(ir, cond_label_id)
-        pushgotoifnot!(ir, end_label_id, cond)
+        pushgotoifnot!(ir, end_label_id, cond_var)
         append!(ir, _lowering(body))
         pushgoto!(ir, cond_label_id)
         pushlabel!(ir, end_label_id)
