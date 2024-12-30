@@ -29,10 +29,10 @@ function run(filename::AbstractString, mode=:interpret)
         interp = MuCore.MuInterpreter.ConcreateInterpreter()
         
         for f in MuBase.load_base()
-            MuCore.injection!(interp, f)
+            MuCore.MuInterpreter.injection!(interp, f)
         end
 
-        MuCore.interpret(ir, interp)
+        MuCore.MuInterpreter.interpret(ir, interp; debug=debug)
     
     elseif mode == :compile
         # TODO
