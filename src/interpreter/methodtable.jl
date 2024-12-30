@@ -40,10 +40,10 @@ end
 
 # Wrapper for a dictionary of method tables
 struct MethodTable
-    # Function name -> Vector of (signature, body) tuples
-    table::Dict{MuAST.Ident, Vector{Tuple{Vector{MuType}, MuAST.Expr}}}
+    # Function name -> Vector of (signature, IR) tuples
+    table::Dict{MuAST.Ident, Vector{Tuple{Vector{MuType}, MuIR.IR}}}
     function MethodTable()
-        new(Dict{MuAST.Ident,Vector{Tuple{MuAST.Expr,MuAST.Expr}}}())
+        new(Dict{MuAST.Ident,Vector{Tuple{MuAST.Expr, MuIR.IR}}}())
     end
 end
 
@@ -57,6 +57,7 @@ function formalarg_to_signature(formalargs::MuAST.Expr)
 end
 
 function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuAST.Expr)
+function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuAST.IR)
     @assert args.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
     @assert body.head == MuAST.BLOCK "Expected BLOCK. Got $(body.head)"
 
@@ -76,8 +77,8 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, signature::Vector{M
         throw(ArgumentError("Method $name not found in method table. Available methods: $(method_names(methodtable))"))
     end 
 
-    # Vector of (signature, body) tuples
-    candidates::Vector{Tuple{Vector{MuType}, MuAST.Expr}} = methodtable.table[name]
+    # Vector of (signature, IR) tuples
+    candidates::Vector{Tuple{Vector{MuType}, MuIR.IR}} = methodtable.table[name]
 
     # Remove methods which don't match argument count
     arg_count = length(signature)
