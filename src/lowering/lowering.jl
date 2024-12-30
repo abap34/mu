@@ -14,6 +14,7 @@ function id_gen()
 end
 
 label_gen = id_gen()
+codeinfo_gen = id_gen()
 _varname_gen = id_gen()
 
 var_gen(arg::MuAST.Ident) = arg
@@ -175,7 +176,7 @@ end
 
 
 # Interface of lowering.
-function lowering(expr::MuAST.Expr)
+function lowering(expr::MuAST.Expr)::MuIR.ProgramIR
     @assert expr.head == MuAST.PROGRAM "Lowering must be called with a PROGRAM. Got $expr"
 
     lowerd = MuIR.ProgramIR()
@@ -185,7 +186,7 @@ function lowering(expr::MuAST.Expr)
 
         ir = _lowering(body)
 
-        push!(lowerd, MuIR.CodeInfo(name, args, ir))
+        push!(lowerd, MuIR.CodeInfo(name, args, ir, codeinfo_gen()))
     end
 
     return lowerd
