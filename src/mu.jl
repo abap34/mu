@@ -26,7 +26,7 @@ function run(filename::AbstractString, mode=:interpret)
     ast = MuCore.parse_file(filename)
     ir = MuCore.lowering(ast)
     if mode == :interpret
-        interp = MuCore.ConcreateInterpreter()
+        interp = MuCore.MuInterpreter.ConcreateInterpreter()
         
         for f in MuBase.load_base()
             MuCore.injection!(interp, f)
