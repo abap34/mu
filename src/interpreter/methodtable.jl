@@ -56,7 +56,10 @@ function formalarg_to_signature(formalargs::MuAST.Expr)
     return (arg -> MuTypes.astype(arg) for arg in formalargs.args)
 end
 
-function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuAST.Expr)
+function add_method!(methodtable::MethodTable, codeinfo::CodeInfo)
+    add_method!(methodtable, codeinfo.name, codeinfo.args, codeinfo.ir)
+end
+
 function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuAST.IR)
     @assert args.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
     @assert body.head == MuAST.BLOCK "Expected BLOCK. Got $(body.head)"
