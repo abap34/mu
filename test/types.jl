@@ -227,7 +227,7 @@ const VALID_TYPES_NESTED = [
 
     @testset "Nested Case" begin
         for (src, expected) in VALID_TYPES_NESTED
-            ast = MuCore.parse(src, rule=MuCore.type)
+            ast = MuCore.parse(src, rule=MuCore.MuParse.type)
             onfail(@test MuTypes.astype(ast) == expected) do
                 @error "Failed! `MuTypes.astype(ast)` must return $expected. But got $(MuTypes.astype(ast))."
             end
