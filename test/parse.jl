@@ -162,6 +162,39 @@ testcases = Dict(
                 MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 2, 3])])
         ))
     ], 
+
+    "TYPE" => [
+        #
+        # TYPE
+        #
+        ("Int", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]))),
+        ("Array{Int, 2}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
+            MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 2
+        ]))),
+        ("Array{Array{Int, 1}, 2}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
+            MuCore.MuAST.Ident("Array"), 
+            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 1]), 2
+        ]))),
+        ("Union{Int, Float}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
+            MuCore.MuAST.Ident("Union"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Float")])
+        ]))),
+        ("Union{Int, Union{Float, Union{Bool, String}}}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
+            MuCore.MuAST.Ident("Union"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 
+            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Union"), 
+                MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Float")]), 
+                MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Union"), 
+                    MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Bool")]), 
+                    MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("String")])
+                ])
+            ])
+        ]))),
+        ("Union{Array{Int, 1}, Array{Int, 2}, Array{Int, 3}}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
+            MuCore.MuAST.Ident("Union"), 
+            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 1]), 
+            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 2]), 
+            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 3])
+        ]))),
+    ],
     
     "GCALL" => [
         #
