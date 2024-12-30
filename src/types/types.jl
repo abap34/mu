@@ -164,4 +164,6 @@ function astype(type::MuAST.Expr)
 
 end
 
-end
+export MuType
+
+end # module
