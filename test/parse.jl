@@ -275,26 +275,25 @@ function check(src::String, rule::Function, checker::Function)
     end
 end
 
-@testset "parse" begin
-    for (testset_name, testcases) in testcases
-        @testset "$testset_name" begin
-            for ((src, rule), checker) in testcases
-                check(src, rule, checker)
-            end
+
+for (testset_name, testcases) in testcases
+    @testset "$testset_name" begin
+        for ((src, rule), checker) in testcases
+            check(src, rule, checker)
         end
     end
+end
 
-    @testset "Parse parsetest/*.mu" begin
-        for file in Glob.glob("parsetest/*.mu")
-            @info "Parsing: $file"
-            src = read(file, String)
-            try 
-                ast = MuCore.parse(src)
-                @test true
-            catch e
-                @info "Failed to parse: $file"
-                @test false
-            end
+@testset "Parse parsetest/*.mu" begin
+    for file in Glob.glob("parsetest/*.mu")
+        @info "Parsing: $file"
+        src = read(file, String)
+        try 
+            ast = MuCore.parse(src)
+            @test true
+        catch e
+            @info "Failed to parse: $file"
+            @test false
         end
     end
 end
