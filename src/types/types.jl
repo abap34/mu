@@ -1,5 +1,8 @@
 module MuTypes
 
+using ..MuAST
+import Base
+
 # [Type hierarchy]
 #                      Any
 #           ------------|-------------
@@ -30,7 +33,6 @@ struct AbstractArray <: MuType end
 struct Array{T<:MuType,N} <: MuType end
 struct Union{S<:MuType,T<:MuType} <: MuType end
 struct Bottom <: MuType end
-
 
 
 is_concrete(::Type{Any}) = false
@@ -91,5 +93,75 @@ issubtype(::Type{U}, ::Type{T}) where {T<:MuType,U<:Union} = all(issubtype(u, T)
 issubtype(::Type{T}, ::Type{U}) where {T<:MuType,U<:Union} = any(issubtype(u, T) for u in expand_types(U))
 
 issubtype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(supertype(S), T) || S == T
+
+Base.:(==)(::Type{U1}, ::Type{U2}) where {U1<:Union,U2<:Union} = Set(expand_types(U1)) == Set(expand_types(U2))
+
+const NON_PARMETRIC_TYPES_STR = ["Any", "Number", "Real", "Int", "Float", "Bool", "AbstractString", "String", "AbstractArray", "Bottom"]
+
+
+function _str_to_type(name::Base.String)
+    @assert name in NON_PARMETRIC_TYPES_STR "Type name must be one of $(NON_PARMETRIC_TYPES_STR). Got $name"
+    if name == "Any"
+        return Any
+    elseif name == "Number"
+        return Number
+    elseif name == "Real"
+        return Real
+    elseif name == "Int"
+        return Int
+    elseif name == "Float"
+        return Float
+    elseif name == "Bool"
+        return Bool
+    elseif name == "AbstractString"
+        return AbstractString
+    elseif name == "String"
+        return String
+    elseif name == "AbstractArray"
+        return AbstractArray
+    elseif name == "Bottom"
+        return Bottom
+    else
+        throw(ArgumentError("Unknown type: $name"))
+    end
+end
+
+function astype(type::MuAST.Ident)
+    @assert type.name in NON_PARMETRIC_TYPES_STR "Type name must be one of $(NON_PARMETRIC_TYPES_STR). Got $(type.name)"
+    return _str_to_type(type.name)
+end
+
+
+function astype(type::MuAST.Expr)
+    @assert type.head == MuAST.TYPE "`astype` can only be applied to `TYPE` expression. Got $(type.head)"
+
+    name = type.args[1].name
+    params = type.args[2:end]
+
+    if name in NON_PARMETRIC_TYPES_STR
+        @assert isempty(params) "Type $name does not take any parameters. Got $(length(params))"
+        return _str_to_type(name)
+
+    elseif name == "Array"
+        elemtype = astype(params[1])
+        dim = type.args[3]
+
+        return Array{elemtype, dim}
+    elseif name == "Union"
+        @assert length(params) >= 2 "Union type must have at least 2 types. Got $(length(type.args))"
+
+        t = Union{astype(pop!(params)), astype(pop!(params))}
+
+        
+        while !isempty(params)
+            t = Union{astype(pop!(params)), t}
+        end
+
+        return t
+    else
+        throw(ArgumentError("Unknown type: $name"))
+    end
+
+end
 
 end
