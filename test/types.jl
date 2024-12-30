@@ -1,4 +1,7 @@
+using mu.MuCore
 using mu.MuCore.MuTypes
+using mu.MuCore.MuAST
+
 
 const TARGET_TYPES = [
     MuTypes.Any, MuTypes.Number,
@@ -149,3 +152,89 @@ end
         end
     end
 end
+
+
+const VALID_TYPES_NONESTED = [
+    # name, parameter, expected type
+    ((MuAST.Ident("Any"), []), MuTypes.Any),
+    ((MuAST.Ident("Number"), []), MuTypes.Number),
+    ((MuAST.Ident("Real"), []), MuTypes.Real),
+    ((MuAST.Ident("Int"), []), MuTypes.Int),
+    ((MuAST.Ident("Float"), []), MuTypes.Float),
+    ((MuAST.Ident("Bool"), []), MuTypes.Bool),
+    ((MuAST.Ident("AbstractString"), []), MuTypes.AbstractString),
+    ((MuAST.Ident("String"), []), MuTypes.String),
+    ((MuAST.Ident("AbstractArray"), []), MuTypes.AbstractArray),
+
+    ((MuAST.Ident("Array"), [MuAST.Ident("Int"), 1]), MuTypes.Array{MuTypes.Int,1}),
+    ((MuAST.Ident("Array"), [MuAST.Ident("Float"), 1]), MuTypes.Array{MuTypes.Float,1}),
+    ((MuAST.Ident("Array"), [MuAST.Ident("Int"), 2]), MuTypes.Array{MuTypes.Int,2}),
+    ((MuAST.Ident("Array"), [MuAST.Ident("Float"), 2]), MuTypes.Array{MuTypes.Float,2}),
+    ((MuAST.Ident("Array"), [MuAST.Ident("Real"), 1]), MuTypes.Array{MuTypes.Real,1}),
+    ((MuAST.Ident("Array"), [MuAST.Ident("Real"), 2]), MuTypes.Array{MuTypes.Real,2}),
+    ((MuAST.Ident("Array"), [MuAST.Ident("Any"), 3]), MuTypes.Array{MuTypes.Any,3}),
+
+
+    ((MuAST.Ident("Union"), [MuAST.Ident("Int"), MuAST.Ident("Float")]), MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Bottom"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Bottom,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Bottom"), MuAST.Ident("Number")]), MuTypes.Union{MuTypes.Bottom,MuTypes.Number}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Any"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Any,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Int"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Number"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Number,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Real"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Real,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Int"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Int"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Number"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Number,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Real"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Real,MuTypes.Bottom}),
+    ((MuAST.Ident("Union"), [MuAST.Ident("Int"), MuAST.Ident("Bottom")]), MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+]
+
+const VALID_TYPES_NESTED = [
+    ("Union{Int,Float}", MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    ("Union{Int,Union{Float,Real}}", MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Real}}),
+    ("Union{Int,Union{Float,Union{Real,Bool}}}", MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Union{MuTypes.Real,MuTypes.Bool}}}),
+    ("Union{Bottom,Bottom}", MuTypes.Union{MuTypes.Bottom,MuTypes.Bottom}),
+    ("Union{Bottom,Number}", MuTypes.Union{MuTypes.Bottom,MuTypes.Number}),
+    ("Union{Bottom,Union{Bottom,Bottom}}", MuTypes.Union{MuTypes.Bottom,MuTypes.Union{MuTypes.Bottom,MuTypes.Bottom}}),
+    ("Union{Any,Bottom}", MuTypes.Union{MuTypes.Any,MuTypes.Bottom}),
+    ("Union{Int,Bottom}", MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+    ("Union{Number,Bottom}", MuTypes.Union{MuTypes.Number,MuTypes.Bottom}),
+    ("Union{Real,Bottom}", MuTypes.Union{MuTypes.Real,MuTypes.Bottom}),
+    ("Union{Int,Bottom}", MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+    ("Union{Int,Bottom}", MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+    ("Union{Number,Bottom}", MuTypes.Union{MuTypes.Number,MuTypes.Bottom}),
+    ("Union{Real,Bottom}", MuTypes.Union{MuTypes.Real,MuTypes.Bottom}),
+    ("Union{Int,Bottom}", MuTypes.Union{MuTypes.Int,MuTypes.Bottom}),
+
+]
+
+
+@testset "Type conversion" begin
+    @testset "No Nested Case" begin
+        for ((name, param), expected) in VALID_TYPES_NONESTED
+            type_expr = MuAST.Expr(
+                MuAST.TYPE,
+                [name, param...]
+            )
+    
+            onfail(@test MuTypes.astype(type_expr) == expected) do
+                @error "Failed! `MuTypes.astype(type_expr)` must return $expected. But got $(MuTypes.astype(type_expr))."
+            end
+        end
+    end
+
+
+
+    @testset "Nested Case" begin
+        for (src, expected) in VALID_TYPES_NESTED
+            ast = MuCore.parse(src, rule=MuCore.type)
+            onfail(@test MuTypes.astype(ast) == expected) do
+                @error "Failed! `MuTypes.astype(ast)` must return $expected. But got $(MuTypes.astype(ast))."
+            end
+        end
+    end
+
+
+end
+
+
