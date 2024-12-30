@@ -67,9 +67,10 @@ struct CodeInfo
     name::MuAST.Ident
     args::MuAST.Expr
     ir::IR
-    function CodeInfo(name::MuAST.Ident, args::MuAST.Expr, ir::IR)
+    id::Int
+    function CodeInfo(name::MuAST.Ident, args::MuAST.Expr, ir::IR, id::Int)
         @assert args.head == MuAST.FORMALARGS "args must be FORMALARGS. Got $(args)"
-        new(name, args, ir)
+        new(name, args, ir, id)
     end
 end
 
@@ -108,7 +109,7 @@ function Base.show(io::IO, ir::IR)
 end
 
  function Base.show(io::IO, codeinfo::CodeInfo)
-    println(io, "function ", codeinfo.name, "(", codeinfo.args, ")")
+    println(io, "function ", codeinfo.name, "(", codeinfo.args, ") (#= id: ", codeinfo.id, " =#)")
     println(io, codeinfo.ir)
     println(io, "end")
 end
