@@ -107,9 +107,13 @@ using PEG
     r"while"p & r"\("p & expr & r"\)"p & seq
 ) |> build_while
 
+@rule typeparam_elem = (
+    type,    
+    primary,
+)
 
 @rule type_parameter = (
-    primary & (r","p & primary)[*]
+    typeparam_elem & (r","p & typeparam_elem)[*]
 ) |> build_type_parameter
 
 
