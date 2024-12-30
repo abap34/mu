@@ -161,7 +161,22 @@ function astype(type::MuAST.Expr)
     else
         throw(ArgumentError("Unknown type: $name"))
     end
+end
 
+function typeof(v)
+    if isa(v, Base.Bool)
+        return Bool
+    elseif isa(v, Base.Int)
+        return Int
+    elseif isa(v, Base.Float64)
+        return Float
+    elseif isa(v, Base.String)
+        return String
+    elseif isa(v, Base.Array)
+        return Array{eltype(v), ndims(v)}
+    else
+        throw(ArgumentError("Unknown Value!: $v $(Base.typeof(v)). Only Int, Float64, String, Bool, Array are supported."))
+    end
 end
 
 export MuType
