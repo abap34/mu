@@ -40,10 +40,11 @@ end
 
 # Wrapper for a dictionary of method tables
 struct MethodTable
-    # Function name -> Vector of (signature, IR) tuples
-    table::Dict{MuAST.Ident, Vector{Tuple{Vector{MuType}, MuIR.IR}}}
+    # Function name -> Vector of (signature, IR, id) tuples
+    table::Dict{MuAST.Ident, Vector{Tuple{Vector{MuType}, MuIR.IR, Int}}}
+    id_to_body::Dict{Int, MuIR.IR}
     function MethodTable()
-        new(Dict{MuAST.Ident,Vector{Tuple{MuAST.Expr, MuIR.IR}}}())
+        new(Dict{MuAST.Ident,Vector{Tuple{MuAST.Expr, MuIR.IR}}}(), Dict{Int, MuIR.IR}())
     end
 end
 
@@ -57,23 +58,27 @@ function formalarg_to_signature(formalargs::MuAST.Expr)
 end
 
 function add_method!(methodtable::MethodTable, codeinfo::MuIR.CodeInfo)
-    add_method!(methodtable, codeinfo.name, codeinfo.args, codeinfo.ir)
+    add_method!(methodtable, codeinfo.name, codeinfo.args, codeinfo.ir, codeinfo.id)
 end
 
-function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuIR.IR)
+function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuIR.IR, id::Int)
     @assert args.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
     @assert body.head == MuAST.BLOCK "Expected BLOCK. Got $(body.head)"
+    @assert !haskey(methodtable.id_to_body, id) "Method with id $id already exists in method table."
 
     if haskey(methodtable.table, name)
-        push!(methodtable.table[name], (formalargs, body))
+        push!(methodtable.table[name], (formalargs, body, id))
     else
         signature = collect(formalarg_to_signature(formalargs))
-        methodtable.table[name] = [(signature, body)]
+        methodtable.table[name] = [(signature, body, id)]
     end
+
+
+    methodtable.id_to_body[id] = body
 end
 
-# Lookup a method in the method table.
-function lookup(methodtable::MethodTable, name::MuAST.Ident, signature::Vector{MuType})
+# Lookup a method in the method table by name and signature and return the method id
+function lookup(methodtable::MethodTable, name::MuAST.Ident, signature::Vector{MuType})::Int
     @assert all(arg -> isa(arg, MuAST.Ident), signature) "All arguments must be Idents. Got $signature"
 
     if !haskey(methodtable.table, name)
@@ -91,14 +96,14 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, signature::Vector{M
     candidates = sort(candidates, lt=(a, b) -> specificity(a, b))
 
     # Find the first method which matches the signature
-    for (i, (sig, body)) in enumerate(candidates)
+    for (i, (sig, body, id)) in enumerate(candidates)
         if ismatch(sig, signature)
             # Check next candidate is same specificity and matches. 
             # If so, throw and `AmbiguousMethodError`
             if i < length(candidates) && specificity(candidates[i+1][1], sig)
                 throw(AmbiguousMethodError("Ambiguous method call. Multiple methods match the signature."))
             end
-            return body
+            return id
         end
     end
-end
+endend
