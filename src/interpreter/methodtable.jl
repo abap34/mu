@@ -6,7 +6,7 @@ using ..MuTypes
 # check no `j` s.t t2[j] <: t1[j]
 function specificity(t1::Vector{<: MuType}, t2::Vector{<: MuType})
     @assert length(t1) == length(t2) "Expected two vectors of the same length. Got $(length(t1)) and $(length(t2))"
-    
+
     for j in eachindex(t1)
         if issubtype(t2[j], t1[j])
             return false
@@ -56,11 +56,11 @@ function formalarg_to_signature(formalargs::MuAST.Expr)
     return (arg -> MuTypes.astype(arg) for arg in formalargs.args)
 end
 
-function add_method!(methodtable::MethodTable, codeinfo::CodeInfo)
+function add_method!(methodtable::MethodTable, codeinfo::MuIR.CodeInfo)
     add_method!(methodtable, codeinfo.name, codeinfo.args, codeinfo.ir)
 end
 
-function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuAST.IR)
+function add_method!(methodtable::MethodTable, name::MuAST.Ident, formalargs::MuAST.Expr, body::MuIR.IR)
     @assert args.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
     @assert body.head == MuAST.BLOCK "Expected BLOCK. Got $(body.head)"
 
