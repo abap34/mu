@@ -1,7 +1,6 @@
 include("ir.jl")
 
 using .MuIR
-using .MuBuiltins
 import .MuAST
 
 
