@@ -94,6 +94,10 @@ function Base.iterate(ir::IR, state)
     return iterate(ir.instrs, state)
 end
 
+function Base.getindex(ir::IR, idx::Int)
+    return ir.instrs[idx]
+end
+
 function Base.show(io::IO, ir::IR)
     instrs = ir.instrs
 
