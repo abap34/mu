@@ -48,14 +48,13 @@ end
 function add_subexpr!(expr::MuAST.Expr, myname::MuAST.Ident, ir::MuIR.IR)
     f, args... = expr.args
 
-
     tmpnames = [var_gen(arg) for arg in args]
 
     for (tmpname, subexpr) in zip(tmpnames, args)
         add_subexpr!(subexpr, tmpname, ir)
     end
 
-    assign_ast = MuAST.Expr(MuAST.ASSIGN, [myname, MuAST.Expr(MuAST.GCALL, [f, tmpnames...])])
+    assign_ast = MuAST.Expr(MuAST.ASSIGN, [myname, MuAST.Expr(expr.head, [f, tmpnames...])])
 
     assign_instr = MuIR.Instr(
         MuIR.ASSIGN,
@@ -72,7 +71,7 @@ _lowering(x::MuAST.Literal) = x
 function _lowering(expr::MuAST.Expr)
     ir = MuIR.IR()
 
-    if expr.head == MuAST.GCALL
+    if expr.head == MuAST.GCALL || expr.head == MuAST.BCALL
         call_ir = MuIR.IR()
 
         add_subexpr!(expr, MuAST.UNUSED_IDENT, call_ir)
