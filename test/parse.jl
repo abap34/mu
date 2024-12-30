@@ -1,11 +1,12 @@
 using mu.MuCore
+using mu.MuCore.MuParse
 import mu.MuCore.MuAST
 using Glob
 
 parseerror() = iserror(expectederror=Base.Meta.ParseError)
 
 function is_ident(ident::String)
-    return (ast) -> (ast == MuCore.MuAST.Ident(ident))
+    return (ast) -> (ast == MuAST.Ident(ident))
 end
 
 
@@ -14,282 +15,262 @@ testcases = Dict(
         #
         # リテラル
         #
-        ("\"hello\"", MuCore.str) => (isequal("hello")),
-        ("\"foo bar baz\"", MuCore.str) => (isequal("foo bar baz")),
-        ("\"\"", MuCore.str) => (isequal("")),
-        ("1", MuCore.int) => (isequal(1)),
-        ("10", MuCore.int) => (isequal(10)),
-        ("0123", MuCore.int) => (parseerror()),
-        ("0", MuCore.int) => (isequal(0)),
-        ("10.0", MuCore.float) => (isequal(10.0)),
-        (".0", MuCore.float) => (iserror()),
-        ("0.", MuCore.float) => (iserror()),
-        ("1.2.3", MuCore.float) => (iserror()),           # ピリオド2つ
-        ("123.", MuCore.float) => (iserror()),
-        ("true", MuCore.bool) => (isequal(true)),
-        ("false", MuCore.bool) => (isequal(false)),
-        ("123.45", MuCore.num) => (isequal(123.45)),
-        ("123", MuCore.num) => (isequal(123)),
-        ("[1, 2, 3]", MuCore.array) => (isequal([1, 2, 3])),
-        ("[1, 2, [3, 4]]", MuCore.array) => (isequal([1, 2, [3, 4]])),
-        ("[1, 2, 3; 4, 5, 6]", MuCore.matrix) => (isequal([1 2 3; 4 5 6])),
-        ("[1, 2, 3; 4, 5, 6, 7]", MuCore.matrix) => (iserror()), # 2行目の要素数が違う
-        ("[]", MuCore.array) => (iserror()),              # 空配列は今回は NG (要素の型指定の構文がないので. 型が定まらない)
-        ("[1,]", MuCore.array) => (iserror()),            # カンマ直後に要素なしもパースが面倒なのでなし
-        ("[\"abc\"]", MuCore.array) => (isequal(["abc"])),
-        ("[true, false]", MuCore.array) => (isequal([true, false])),
-        ("[1, 2, 3]", MuCore.array) => (isequal([1, 2, 3]))
-    ], 
-    
-    "ident" => [
+        ("\"hello\"", MuParse.str) => (isequal("hello")),
+        ("\"foo bar baz\"", MuParse.str) => (isequal("foo bar baz")),
+        ("\"\"", MuParse.str) => (isequal("")),
+        ("1", MuParse.int) => (isequal(1)),
+        ("10", MuParse.int) => (isequal(10)),
+        ("0123", MuParse.int) => (parseerror()),
+        ("0", MuParse.int) => (isequal(0)),
+        ("10.0", MuParse.float) => (isequal(10.0)),
+        (".0", MuParse.float) => (iserror()),
+        ("0.", MuParse.float) => (iserror()),
+        ("1.2.3", MuParse.float) => (iserror()),           # ピリオド2つ
+        ("123.", MuParse.float) => (iserror()),
+        ("true", MuParse.bool) => (isequal(true)),
+        ("false", MuParse.bool) => (isequal(false)),
+        ("123.45", MuParse.num) => (isequal(123.45)),
+        ("123", MuParse.num) => (isequal(123)),
+        ("[1, 2, 3]", MuParse.array) => (isequal([1, 2, 3])),
+        ("[1, 2, [3, 4]]", MuParse.array) => (isequal([1, 2, [3, 4]])),
+        ("[1, 2, 3; 4, 5, 6]", MuParse.matrix) => (isequal([1 2 3; 4 5 6])),
+        ("[1, 2, 3; 4, 5, 6, 7]", MuParse.matrix) => (iserror()), # 2行目の要素数が違う
+        ("[]", MuParse.array) => (iserror()),              # 空配列は今回は NG (要素の型指定の構文がないので. 型が定まらない)
+        ("[1,]", MuParse.array) => (iserror()),            # カンマ直後に要素なしもパースが面倒なのでなし
+        ("[\"abc\"]", MuParse.array) => (isequal(["abc"])),
+        ("[true, false]", MuParse.array) => (isequal([true, false])),
+        ("[1, 2, 3]", MuParse.array) => (isequal([1, 2, 3]))
+    ], "ident" => [
         #
         # 識別子
         #
-        ("abc", MuCore.ident) => (is_ident("abc")),
-        ("abc_123", MuCore.ident) => (is_ident("abc_123")),
-        ("123abc", MuCore.ident) => (parseerror()),
-        ("if", MuCore.ident) => (iserror()),       # キーワード
-        ("true", MuCore.ident) => (iserror()),     # キーワード
-        ("false", MuCore.ident) => (iserror()),    # キーワード
-        ("_leading_underscore", MuCore.ident) => is_ident("_leading_underscore"),
-        ("if_else", MuCore.ident) => is_ident("if_else"),  # 部分的にキーワード含むがOK
-        ("ifelse", MuCore.ident) => is_ident("ifelse"),    # 同上
-    ], 
-    
-    "unary" => [
+        ("abc", MuParse.ident) => (is_ident("abc")),
+        ("abc_123", MuParse.ident) => (is_ident("abc_123")),
+        ("123abc", MuParse.ident) => (parseerror()),
+        ("if", MuParse.ident) => (iserror()),       # キーワード
+        ("true", MuParse.ident) => (iserror()),     # キーワード
+        ("false", MuParse.ident) => (iserror()),    # キーワード
+        ("_leading_underscore", MuParse.ident) => is_ident("_leading_underscore"),
+        ("if_else", MuParse.ident) => is_ident("if_else"),  # 部分的にキーワード含むがOK
+        ("ifelse", MuParse.ident) => is_ident("ifelse"),    # 同上
+    ], "unary" => [
         #
         # 単項演算
         #
-        ("1.0", MuCore.unary) => (isequal(1.0)),
-        ("-1.234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), 1.234]))),
-        ("-1234", MuCore.unary) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), 1234]))),
-        ("1", MuCore.unary) => (isequal(1)),
-        ("\"hello\"", MuCore.unary) => (isequal("hello")),
-        ("true", MuCore.unary) => (isequal(true)),
-        ("false", MuCore.unary) => (isequal(false)),
-        ("abc", MuCore.unary) => is_ident("abc"),
-        ("abc_123", MuCore.unary) => is_ident("abc_123"),
-        ("123abc", MuCore.unary) => (parseerror()),
-        ("if", MuCore.unary) => (iserror()),
-        ("true", MuCore.unary) => (isequal(true)),
-        ("1 + 2", MuCore.add) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2])
+        ("1.0", MuParse.unary) => (isequal(1.0)),
+        ("-1.234", MuParse.unary) => (isequal(MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), 1.234]))),
+        ("-1234", MuParse.unary) => (isequal(MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), 1234]))),
+        ("1", MuParse.unary) => (isequal(1)),
+        ("\"hello\"", MuParse.unary) => (isequal("hello")),
+        ("true", MuParse.unary) => (isequal(true)),
+        ("false", MuParse.unary) => (isequal(false)),
+        ("abc", MuParse.unary) => is_ident("abc"),
+        ("abc_123", MuParse.unary) => is_ident("abc_123"),
+        ("123abc", MuParse.unary) => (parseerror()),
+        ("if", MuParse.unary) => (iserror()),
+        ("true", MuParse.unary) => (isequal(true)),
+        ("1 + 2", MuParse.add) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 1, 2])
         )),
-        ("-read_as_int()", MuCore.unary) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("read_as_int")])])
+        ("-read_as_int()", MuParse.unary) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), MuAST.Expr(MuAST.GCALL, [MuAST.Ident("read_as_int")])])
         )),
-    ], 
-    
-    "binop" => [
+    ], "binop" => [
         #
         # add (連続演算)
         #
-        ("1 + 2 + 3", MuCore.add) => begin
+        ("1 + 2 + 3", MuParse.add) => begin
             # 1 + 2 + 3 は (1 + 2) + 3 という左結合
-            lhs = MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2])
+            lhs = MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 1, 2])
             rhs = 3
-            isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), lhs, rhs]))
+            isequal(MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), lhs, rhs]))
         end,
-        ("a - b - c", MuCore.add) => begin
+        ("a - b - c", MuParse.add) => begin
             # (a - b) - c
-            lhs = MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"),
-                MuCore.MuAST.Ident("a"), MuCore.MuAST.Ident("b")])
-            rhs = MuCore.MuAST.Ident("c")
-            isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), lhs, rhs]))
+            lhs = MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"),
+                MuAST.Ident("a"), MuAST.Ident("b")])
+            rhs = MuAST.Ident("c")
+            isequal(MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), lhs, rhs]))
         end,
 
         #
         # mul
         #
-        ("2 * 3", MuCore.mul) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 2, 3])
+        ("2 * 3", MuParse.mul) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("mul"), 2, 3])
         )),
-        ("a * b / c", MuCore.mul) => begin
+        ("a * b / c", MuParse.mul) => begin
             # a * b / c は左結合: (a*b)/c
-            lhs = MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [
-                MuCore.MuAST.Ident("mul"),
-                MuCore.MuAST.Ident("a"),
-                MuCore.MuAST.Ident("b")
+            lhs = MuAST.Expr(MuAST.GCALL, [
+                MuAST.Ident("mul"),
+                MuAST.Ident("a"),
+                MuAST.Ident("b")
             ])
-            rhs = MuCore.MuAST.Ident("c")
-            isequal(MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("div"), lhs, rhs]))
+            rhs = MuAST.Ident("c")
+            isequal(MuAST.Expr(MuAST.GCALL, [MuAST.Ident("div"), lhs, rhs]))
         end,
 
         #
         # relational
         #
-        ("1 < 2", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("lt"), 1, 2])
+        ("1 < 2", MuParse.relational) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("lt"), 1, 2])
         )),
-        ("x == y", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("eq"),
-                MuCore.MuAST.Ident("x"), MuCore.MuAST.Ident("y")])
+        ("x == y", MuParse.relational) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("eq"),
+                MuAST.Ident("x"), MuAST.Ident("y")])
         )),
-        ("10 != 20", MuCore.relational) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("neq"), 10, 20])
+        ("10 != 20", MuParse.relational) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("neq"), 10, 20])
         )),
 
         #
         # assign
         #
-        ("x = 123", MuCore.assign) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("x"), 123])
+        ("x = 123", MuParse.assign) => (isequal(
+            MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident("x"), 123])
         )),
-        ("x+1 = y", MuCore.assign) => (parseerror()),
-        ("foo_bar = read_as_int()", MuCore.assign) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("foo_bar"), MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("read_as_int")])])
+        ("x+1 = y", MuParse.assign) => (parseerror()),
+        ("foo_bar = read_as_int()", MuParse.assign) => (isequal(
+            MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident("foo_bar"), MuAST.Expr(MuAST.GCALL, [MuAST.Ident("read_as_int")])])
+        )), ("(1 + 2) * 3", MuParse.mul) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("mul"),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 1, 2]), 3])
         )),
-
-        ("(1 + 2) * 3", MuCore.mul) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2]), 3])
+        ("1 + (2 * 3)", MuParse.add) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 1,
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("mul"), 2, 3])])
         )),
-        ("1 + (2 * 3)", MuCore.add) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 2, 3])])
+        ("(1 + 2) * (3 + 4)", MuParse.mul) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("mul"),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 1, 2]),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 3, 4])])
         )),
-        ("(1 + 2) * (3 + 4)", MuCore.mul) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2]), 
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 3, 4])])
+        ("(1 + 2) * 3", MuParse.mul) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("mul"),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 1, 2]), 3])
         )),
-        ("(1 + 2) * 3", MuCore.mul) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 2]), 3])
-        )),
-        ("1 + (2 * 3)", MuCore.add) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("add"), 1, 
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("mul"), 2, 3])])
+        ("1 + (2 * 3)", MuParse.add) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("add"), 1,
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("mul"), 2, 3])])
         ))
-    ], 
-
-    "TYPE" => [
+    ], "TYPE" => [
         #
         # TYPE
         #
-        ("Int", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]))),
-        ("Array{Int, 2}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
-            MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 2
+        ("Int", MuParse.type) => (isequal(MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]))),
+        ("Array{Int, 2}", MuParse.type) => (isequal(MuAST.Expr(MuAST.TYPE, [
+            MuAST.Ident("Array"), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]), 2
         ]))),
-        ("Array{Array{Int, 1}, 2}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
-            MuCore.MuAST.Ident("Array"), 
-            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 1]), 2
+        ("Array{Array{Int, 1}, 2}", MuParse.type) => (isequal(MuAST.Expr(MuAST.TYPE, [
+            MuAST.Ident("Array"),
+            MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Array"), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]), 1]), 2
         ]))),
-        ("Union{Int, Float}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
-            MuCore.MuAST.Ident("Union"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Float")])
+        ("Union{Int, Float}", MuParse.type) => (isequal(MuAST.Expr(MuAST.TYPE, [
+            MuAST.Ident("Union"), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Float")])
         ]))),
-        ("Union{Int, Union{Float, Union{Bool, String}}}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
-            MuCore.MuAST.Ident("Union"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 
-            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Union"), 
-                MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Float")]), 
-                MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Union"), 
-                    MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Bool")]), 
-                    MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("String")])
+        ("Union{Int, Union{Float, Union{Bool, String}}}", MuParse.type) => (isequal(MuAST.Expr(MuAST.TYPE, [
+            MuAST.Ident("Union"), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]),
+            MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Union"),
+                MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Float")]),
+                MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Union"),
+                    MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Bool")]),
+                    MuAST.Expr(MuAST.TYPE, [MuAST.Ident("String")])
                 ])
             ])
         ]))),
-        ("Union{Array{Int, 1}, Array{Int, 2}, Array{Int, 3}}", MuCore.type) => (isequal(MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [
-            MuCore.MuAST.Ident("Union"), 
-            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 1]), 
-            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 2]), 
-            MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Array"), MuCore.MuAST.Expr(MuCore.MuAST.TYPE, [MuCore.MuAST.Ident("Int")]), 3])
+        ("Union{Array{Int, 1}, Array{Int, 2}, Array{Int, 3}}", MuParse.type) => (isequal(MuAST.Expr(MuAST.TYPE, [
+            MuAST.Ident("Union"),
+            MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Array"), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]), 1]),
+            MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Array"), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]), 2]),
+            MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Array"), MuAST.Expr(MuAST.TYPE, [MuAST.Ident("Int")]), 3])
         ]))),
-    ],
-    
-    "GCALL" => [
+    ], "GCALL" => [
         #
-        # MuCore.MuAST.GCALL (引数あり・なし)
+        # MuAST.GCALL (引数あり・なし)
         #
-        ("foo()", MuCore.generics_call) => (isequal(
+        ("foo()", MuParse.generics_call) => (isequal(
             # 引数なし
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("foo")])
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("foo")])
         )),
-        ("bar(1, 2)", MuCore.generics_call) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("bar"), 1, 2])
+        ("bar(1, 2)", MuParse.generics_call) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("bar"), 1, 2])
         )),
-        ("foo(bar())", MuCore.generics_call) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [
-                MuCore.MuAST.Ident("foo"),
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("bar")])
+        ("foo(bar())", MuParse.generics_call) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [
+                MuAST.Ident("foo"),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("bar")])
             ])
         ))
-    ], 
-
-    "BCALL" => [
+    ], "BCALL" => [
         #
         # BCALL (引数あり・なし)
         #
-        ("@foo()", MuCore.builtin_call) => (isequal(
+        ("@foo()", MuParse.builtin_call) => (isequal(
             # 引数なし
-            MuCore.MuAST.Expr(MuCore.MuAST.BCALL, [MuCore.MuAST.Ident("foo")])
+            MuAST.Expr(MuAST.BCALL, [MuAST.Ident("foo")])
         )),
-        ("@bar(1, 2)", MuCore.builtin_call) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.BCALL, [MuCore.MuAST.Ident("bar"), 1, 2])
+        ("@bar(1, 2)", MuParse.builtin_call) => (isequal(
+            MuAST.Expr(MuAST.BCALL, [MuAST.Ident("bar"), 1, 2])
         )),
-        ("@foo(bar())", MuCore.builtin_call) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.BCALL, [
-                MuCore.MuAST.Ident("foo"),
-                MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("bar")])
+        ("@foo(bar())", MuParse.builtin_call) => (isequal(
+            MuAST.Expr(MuAST.BCALL, [
+                MuAST.Ident("foo"),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("bar")])
             ])
         ))
-    ],
-    
-    "seq" => [
+    ], "seq" => [
         #
         # seq (複数 expr)
         #
-        ("{ 1 2 3 }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [1, 2, 3])
+        ("{ 1 2 3 }", MuParse.seq) => (isequal(
+            MuAST.Expr(MuAST.BLOCK, [1, 2, 3])
         )),
-        ("{ }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [])
+        ("{ }", MuParse.seq) => (isequal(
+            MuAST.Expr(MuAST.BLOCK, [])
         )),
-    ], 
-    
-    "if" => [
+    ], "if" => [
         #
         # if 文
         #
-        ("if(1){2}", MuCore._if) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.IF, [
+        ("if(1){2}", MuParse._if) => (isequal(
+            MuAST.Expr(MuAST.IF, [
                 1,
-                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [2]),
+                MuAST.Expr(MuAST.BLOCK, [2]),
             ])
         )),
-        ("if(x){ y=1 } else { y=3 }", MuCore._if) => isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.IFELSE, [
-                MuCore.MuAST.Ident("x"),
-                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
-                    MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("y"), 1])
+        ("if(x){ y=1 } else { y=3 }", MuParse._if) => isequal(
+            MuAST.Expr(MuAST.IFELSE, [
+                MuAST.Ident("x"),
+                MuAST.Expr(MuAST.BLOCK, [
+                    MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident("y"), 1])
                 ]),
-                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
-                    MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("y"), 3])
+                MuAST.Expr(MuAST.BLOCK, [
+                    MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident("y"), 3])
                 ])
             ]
             )
         ),
-    ], 
-    
-    "while"=> [
+    ], "while" => [
 
         #
         # while 文
         #
-        ("while(x){ x = x - 1 }", MuCore._while) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.WHILE, [
-                MuCore.MuAST.Ident("x"),
-                MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
-                    MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("x"), MuCore.MuAST.Expr(MuCore.MuAST.GCALL, [MuCore.MuAST.Ident("sub"), MuCore.MuAST.Ident("x"), 1])])
+        ("while(x){ x = x - 1 }", MuParse._while) => (isequal(
+            MuAST.Expr(MuAST.WHILE, [
+                MuAST.Ident("x"),
+                MuAST.Expr(MuAST.BLOCK, [
+                    MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident("x"), MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), MuAST.Ident("x"), 1])])
                 ])
             ])
         )),
-        ("{ a=1 b=2 }", MuCore.seq) => (isequal(
-            MuCore.MuAST.Expr(MuCore.MuAST.BLOCK, [
-                MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("a"), 1]),
-                MuCore.MuAST.Expr(MuCore.MuAST.ASSIGN, [MuCore.MuAST.Ident("b"), 2])
+        ("{ a=1 b=2 }", MuParse.seq) => (isequal(
+            MuAST.Expr(MuAST.BLOCK, [
+                MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident("a"), 1]),
+                MuAST.Expr(MuAST.ASSIGN, [MuAST.Ident("b"), 2])
             ])
         )),
-    ],     
+    ],
 )
 
 function check(src::String, rule::Function, checker::Function)
@@ -321,7 +302,7 @@ end
     for file in Glob.glob("parsetest/*.mu")
         @info "Parsing: $file"
         src = read(file, String)
-        try 
+        try
             ast = MuCore.parse(src)
             @test true
         catch e
@@ -330,3 +311,5 @@ end
         end
     end
 end
+
+
