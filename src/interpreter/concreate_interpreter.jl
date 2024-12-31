@@ -42,6 +42,13 @@ function reset!(interp::ConcreateInterpreter)
     interp.callstack = CallStack()
 end
 
+function label_to_pc(interp::ConcreateInterpreter, method_id::Int, label::Int)
+    @assert haskey(interp.label_to_pc, method_id) "Method id $method_id not found in label_to_pc. Available method ids: $(keys(interp.label_to_pc))"
+    @assert haskey(interp.label_to_pc[method_id], label) "Label $label not found in label_to_pc[$method_id]. Available labels: $(keys(interp.label_to_pc[method_id])). Method ir:\n$(interp.methodtable.id_to_codeinfo[method_id].ir)"
+
+    return interp.label_to_pc[method_id][label]
+end
+
 function currentframe(interp::ConcreateInterpreter)
     return interp.callstack[end]
 end
@@ -50,21 +57,15 @@ function injection!(interp::ConcreateInterpreter, codeinfo::MuIR.CodeInfo)
     # Register the method
     add_method!(interp.methodtable, codeinfo)
 
-    # Calculate label to pc mapping
-    label_to_pc = interp.label_to_pc
-
-    for (id, _) in interp.methodtable.id_to_codeinfo
-        label_to_pc[id] = Dict{Int,Int}()
-    end
+    # register method
+    interp.label_to_pc[codeinfo.id] = Dict{Int,Int}()
 
     for (idx, instr) in enumerate(codeinfo.ir)
         if instr.irtype == MuIR.LABEL
             label = instr.expr.args[1]
-            label_to_pc[codeinfo.id][label] = idx
+            interp.label_to_pc[codeinfo.id][label] = idx
         end
     end
-
-    interp.label_to_pc = label_to_pc
 end
 
 function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Literal)
@@ -138,14 +139,15 @@ function interpret_local!(interp::ConcreateInterpreter, ir::MuIR.IR)
             frame.pc += 1
 
         elseif instr.irtype == MuIR.GOTO
-            frame.pc = interp.label_to_pc[frame.method_id][instr.expr.args[1]]
+            label = instr.expr.args[1]
+            frame.pc = label_to_pc(interp, frame.method_id, label)
 
         elseif instr.irtype == MuIR.GOTOIFNOT
             label, cond = instr.expr.args
 
 
             if !execute_expr!(interp, cond)
-                frame.pc = interp.label_to_pc[frame.method_id][label]
+                frame.pc = label_to_pc(interp, frame.method_id, label)
             else
                 frame.pc += 1
             end
