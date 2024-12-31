@@ -1,3 +1,5 @@
+import Base
+
 include("methodtable.jl")
 
 struct Env
@@ -5,6 +7,18 @@ struct Env
     function Env()
         new(Dict{String,Any}())
     end
+end
+
+function Base.show(io::IO, env::Env)
+    println("Env")
+    name_width = max(10, maximum(length.(string.(keys(env.bindings)))))
+    println("│ $(rpad("Name", name_width)) │ Value")    
+    for (name, value) in env.bindings
+        println("├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
+        print("│ $(lpad(name, name_width)) │ ")
+        println(value)
+    end
+
 end
 
 mutable struct Frame
@@ -168,7 +182,7 @@ function interpret_local!(interp::ConcreateInterpreter, ir::MuIR.IR)
 end
 
 
-function interpret(program::MuIR.ProgramIR, interp::ConcreateInterpreter; debug=false)
+function interpret(program::MuIR.ProgramIR, interp::ConcreateInterpreter)
     for f in program
         injection!(interp, f)
     end
@@ -183,7 +197,7 @@ function interpret(program::MuIR.ProgramIR, interp::ConcreateInterpreter; debug=
 end
 
 function interpret(program::MuIR.ProgramIR)
-    interpret(program, ConcreateInterpreter(); debug=false)
+    interpret(program, ConcreateInterpreter())
 end
 
 
