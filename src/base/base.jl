@@ -166,6 +166,18 @@ function sub(a::Float, b::Float){
 function print(s::Any){
     return @print(s)
 }
+
+function length(arr::AbstractArray){
+    return @length(arr)    
+}
+
+function get(arr::AbstractArray, idx::Int){
+    return @get(arr, idx)    
+}
+
+function set(arr::AbstractArray, idx::Int, value::Any){
+    return @set(arr, idx, value)
+}
 """
 
 
