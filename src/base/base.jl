@@ -187,3 +187,10 @@ function load_base()::MuCore.MuIR.ProgramIR
     return ir
 end
 
+
+function injection_base!(interp)
+    for f in load_base()
+        MuCore.MuInterpreter.injection!(interp, f)
+    end
+end
+
