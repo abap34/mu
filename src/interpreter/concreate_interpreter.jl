@@ -36,6 +36,12 @@ mutable struct ConcreateInterpreter <: AbstractInterpreter
     end
 end
 
+function reset!(interp::ConcreateInterpreter)
+    interp.label_to_pc = Dict{Int,Dict{Int,Int}}()
+    interp.methodtable = MethodTable()
+    interp.callstack = CallStack()
+end
+
 function currentframe(interp::ConcreateInterpreter)
     return interp.callstack[end]
 end
