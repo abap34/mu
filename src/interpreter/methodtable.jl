@@ -2,7 +2,6 @@ using ..MuTypes
 
 # Exists an `i` s.t t1[i] <: t2[i]
 # and no `j` s.t t2[j] <: t1[j], t1 is more specific than t2.
-
 # check no `j` s.t t2[j] <: t1[j]
 function specificity(t1::AbstractArray, t2::AbstractArray)
     @assert length(t1) == length(t2) "Expected two vectors of the same length. Got $(length(t1)) and $(length(t2))"
@@ -46,6 +45,41 @@ struct MethodTable
     id_to_codeinfo::Dict{Int, MuIR.CodeInfo}
     function MethodTable()
         new(Dict{MuAST.Ident,Vector{Tuple{MuAST.Expr, MuIR.IR}}}(), Dict{Int, MuIR.IR}())
+    end
+end
+
+function Base.show(io::IO, methodtable::MethodTable)
+    println(io, "MethodTable:")
+   
+    name_width = max(10, maximum(length.(string.(keys(methodtable.table)))))
+
+    if isempty(methodtable.table)
+        println("Empty method table.")
+    else
+        println("│ $(rpad("Name", name_width)) │ Signature")
+    end
+        
+
+    for (name, methods) in methodtable.table
+        println("├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
+        print("│ $(lpad(name, name_width)) │ ")
+
+        for (i, (signature, _, _)) in enumerate(methods)
+
+            if isempty(signature)
+                print("#= No arguments =#")
+            end
+           
+            for (j, arg) in enumerate(signature)
+                print(arg)
+                if j < length(signature)
+                    print(", ")
+                end
+            end
+            println()
+            print("│ $(repeat(" ", name_width)) │ ") # padding
+        end
+        println()
     end
 end
 
