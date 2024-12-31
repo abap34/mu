@@ -86,7 +86,9 @@ end
 @builtin print(args::AbstractArray, env::Dict{String,Any}) = Base.println(args...)
 @builtin readline(args::AbstractArray, env::Dict{String,Any}) = Base.readline()
 
-
+@builtin length(args::AbstractArray, env::Dict{String,Any}) = Base.length(args[1])
+@builtin get(args::AbstractArray, env::Dict{String,Any}) = args[1][args[2]]
+@builtin set(args::AbstractArray, env::Dict{String,Any}) = args[1][args[2]] = args[3]
 
 
 end # module MuBuiltins
