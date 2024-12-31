@@ -49,6 +49,11 @@ struct MethodTable
 end
 
 function Base.show(io::IO, methodtable::MethodTable)
+    if isempty(methodtable.table)
+        print(io, "MethodTable(Dict{}()) (empty)")
+        return
+    end
+
     println(io, "MethodTable:")
    
     name_width = max(10, maximum(length.(string.(keys(methodtable.table)))))
