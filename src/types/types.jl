@@ -126,6 +126,34 @@ function _str_to_type(name::Base.String)
     end
 end
 
+function _type_to_mutype(t::DataType)
+    if t == Base.Any
+        return Any
+    elseif t == Base.Number
+        return Number
+    elseif t == Base.Real
+        return Real
+    elseif t == Base.Int
+        return Int
+    elseif t == Base.Float64
+        return Float
+    elseif t == Base.Bool
+        return Bool
+    elseif t == Base.String
+        return String
+    elseif t == Base.AbstractString
+        return AbstractString
+    elseif t == Base.AbstractArray
+        return AbstractArray
+    elseif t == Base.Bottom
+        return Bottom
+    elseif t isa Array
+        return Array{_type_to_mutype(eltype(t)), ndims(t)}
+    else
+        throw(ArgumentError("Unknown type: $t"))
+    end
+end
+
 function astype(type::MuAST.Ident)
     @assert type.name in NON_PARMETRIC_TYPES_STR "Type name must be one of $(NON_PARMETRIC_TYPES_STR). Got $(type.name)"
     return _str_to_type(type.name)
@@ -173,7 +201,7 @@ function typeof(v)
     elseif isa(v, Base.String)
         return String
     elseif isa(v, Base.Array)
-        return Array{eltype(v), ndims(v)}
+        return Array{_type_to_mutype(eltype(v)), ndims(v)}
     else
         throw(ArgumentError("Unknown Value!: $v $(Base.typeof(v)). Only Int, Float64, String, Bool, Array are supported."))
     end
