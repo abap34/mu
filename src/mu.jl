@@ -7,7 +7,7 @@ include("parse/parse.jl")
 
 include("lowering/lowering.jl")
 
-include("types/types.jl")   
+include("types/types.jl")
 
 include("builtin/builtin.jl")
 
@@ -28,12 +28,12 @@ function run(filename::AbstractString, mode=:interpret)
     ast = MuCore.parse_file(filename)
     ir = MuCore.lowering(ast)
     if mode == :interpret
-        interp = MuCore.MuInterpreter.ConcreateInterpreter()
-        
+        interp = MuCore.MuInterpreter.NativeInterpreter()
+
         MuBase.injection_base!(interp)
 
         MuCore.MuInterpreter.interpret(ir, interp)
-    
+
     elseif mode == :compile
         # TODO
     end

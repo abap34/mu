@@ -12,7 +12,7 @@ end
 function Base.show(io::IO, env::Env)
     println("Env")
     name_width = max(10, maximum(length.(string.(keys(env.bindings)))))
-    println("│ $(rpad("Name", name_width)) │ Value")    
+    println("│ $(rpad("Name", name_width)) │ Value")
     for (name, value) in env.bindings
         println("├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
         print("│ $(lpad(name, name_width)) │ ")
@@ -40,34 +40,34 @@ end
 
 const CallStack = Vector{Frame}
 
-mutable struct ConcreateInterpreter <: AbstractInterpreter
+mutable struct NativeInterpreter <: AbstractInterpreter
     # Method id -> label -> pc
     label_to_pc::Dict{Int,Dict{Int,Int}}
     methodtable::MethodTable
     callstack::CallStack
-    function ConcreateInterpreter()
+    function NativeInterpreter()
         new(Dict{Int,Int}(), MethodTable(), CallStack())
     end
 end
 
-function reset!(interp::ConcreateInterpreter)
+function reset!(interp::NativeInterpreter)
     interp.label_to_pc = Dict{Int,Dict{Int,Int}}()
     interp.methodtable = MethodTable()
     interp.callstack = CallStack()
 end
 
-function label_to_pc(interp::ConcreateInterpreter, method_id::Int, label::Int)
+function label_to_pc(interp::NativeInterpreter, method_id::Int, label::Int)
     @assert haskey(interp.label_to_pc, method_id) "Method id $method_id not found in label_to_pc. Available method ids: $(keys(interp.label_to_pc))"
     @assert haskey(interp.label_to_pc[method_id], label) "Label $label not found in label_to_pc[$method_id]. Available labels: $(keys(interp.label_to_pc[method_id])). Method ir:\n$(interp.methodtable.id_to_codeinfo[method_id].ir)"
 
     return interp.label_to_pc[method_id][label]
 end
 
-function currentframe(interp::ConcreateInterpreter)
+function currentframe(interp::NativeInterpreter)
     return interp.callstack[end]
 end
 
-function injection!(interp::ConcreateInterpreter, codeinfo::MuIR.CodeInfo)
+function injection!(interp::NativeInterpreter, codeinfo::MuIR.CodeInfo)
     # Register the method
     add_method!(interp.methodtable, codeinfo)
 
@@ -82,15 +82,15 @@ function injection!(interp::ConcreateInterpreter, codeinfo::MuIR.CodeInfo)
     end
 end
 
-function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Literal)
+function execute_expr!(interp::NativeInterpreter, expr::MuAST.Literal)
     return expr
 end
 
-function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Ident)
+function execute_expr!(interp::NativeInterpreter, expr::MuAST.Ident)
     return lookup(currentframe(interp), expr.name)
 end
 
-function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Expr)
+function execute_expr!(interp::NativeInterpreter, expr::MuAST.Expr)
     if expr.head == MuAST.GCALL
         f, args... = expr.args
 
@@ -112,7 +112,7 @@ function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Expr)
     end
 end
 
-function call_generics!(interp::ConcreateInterpreter, name::MuAST.Ident, args::Vector{<:Any})
+function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vector{<:Any})
     @assert all(arg -> arg isa MuAST.Ident || arg isa MuAST.Literal, args) "Arguments must be LITERAL or IDENT. Got $(args)"
 
     argvalues = [execute_expr!(interp, arg) for arg in args]
@@ -137,12 +137,12 @@ function call_generics!(interp::ConcreateInterpreter, name::MuAST.Ident, args::V
 end
 
 
-function call_builtin!(interp::ConcreateInterpreter, name::MuAST.Ident, args::Vector{<:Any})
+function call_builtin!(interp::NativeInterpreter, name::MuAST.Ident, args::Vector{<:Any})
     MuBuiltins.get_builtin(name.name)(args, currentframe(interp).env.bindings)
 end
 
 
-function interpret_local!(interp::ConcreateInterpreter, ir::MuIR.IR)
+function interpret_local!(interp::NativeInterpreter, ir::MuIR.IR)
     frame = currentframe(interp)
 
     while frame.pc <= length(ir)
@@ -182,7 +182,7 @@ function interpret_local!(interp::ConcreateInterpreter, ir::MuIR.IR)
 end
 
 
-function interpret(program::MuIR.ProgramIR, interp::ConcreateInterpreter)
+function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
     for f in program
         injection!(interp, f)
     end
@@ -197,7 +197,7 @@ function interpret(program::MuIR.ProgramIR, interp::ConcreateInterpreter)
 end
 
 function interpret(program::MuIR.ProgramIR)
-    interpret(program, ConcreateInterpreter())
+    interpret(program, NativeInterpreter())
 end
 
 
