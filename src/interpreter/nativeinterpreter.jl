@@ -120,13 +120,11 @@ function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vect
     method_id = lookup(interp.methodtable, name, argtypes)
 
     codeinfo = codeinfo_by_id(interp.methodtable, method_id)
-    formalargs = codeinfo.args
 
     push!(interp.callstack, Frame(method_id, 1, Env()))
 
-    for (formal, arg) in zip(formalargs.args, argvalues)
-        @assert arg isa MuAST.Literal || arg isa MuAST.Ident "Argument must be Literal or Ident. Got $(arg.head)"
-        bind!(currentframe(interp), formal.args[1].name, arg)
+    for (name, value) in zip(codeinfo.argname, argvalues)
+        bind!(currentframe(interp), name.name, value)
     end
 
     result = interpret_local!(interp, codeinfo.ir)
