@@ -4,6 +4,7 @@ using Printf
 import Base
 
 import ..MuAST
+import ..MuTypes
 
 
 @enum IRType begin
@@ -15,9 +16,9 @@ import ..MuAST
 end
 
 struct Instr
-    irtype::IRType    
+    irtype::IRType
     expr::MuAST.Expr
-    typing::Union{Nothing, MuAST.Expr}
+    typing::Union{Nothing,MuAST.Expr}
     function Instr(irtype::IRType, expr::MuAST.Expr; typing::Nothing=nothing)
         new(irtype, expr, typing)
     end
@@ -63,15 +64,41 @@ struct IR
     end
 end
 
+# Information of each **method**.
 struct CodeInfo
-    name::MuAST.Ident
-    args::MuAST.Expr
-    ir::IR
-    id::Int
-    function CodeInfo(name::MuAST.Ident, args::MuAST.Expr, ir::IR, id::Int)
-        @assert args.head == MuAST.FORMALARGS "args must be FORMALARGS. Got $(args)"
-        new(name, args, ir, id)
+    name::MuAST.Ident               # Name of the method (not unique) 
+    argname::Vector{MuAST.Ident}    # Argument names (e.g. [`a`, `b`, `c`])
+    signature::Vector{DataType}     # Signature of the method. All elements must be MuTypes.
+    ir::IR                          # IR of the method
+    id::Int                         # id of the method (unique)
+    function CodeInfo(name::MuAST.Ident, argname::AbstractArray, signature::AbstractArray, ir::IR, id::Int)
+        if length(argname) != length(signature)
+            throw(ArgumentError("Length of argname and signature must be the same. Got $(length(argname)) and $(length(signature))"))
+        end
+
+        if any(sig -> !(sig <: MuTypes.MuType), signature)
+            throw(ArgumentError("All signature must be MuTypes. Got $signature"))
+        end
+
+        return new(name, argname, signature, ir, id)
     end
+end
+
+function get_names(formalargs::MuAST.Expr)
+    @assert formalargs.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
+    return [arg.args[1] for arg in formalargs.args]
+end
+
+function formalarg_to_signature(formalargs::MuAST.Expr)
+    @assert formalargs.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
+    return [MuTypes.astype(arg.args[2]) for arg in formalargs.args]
+end
+
+function CodeInfo(name::MuAST.Ident, args::MuAST.Expr, ir::IR, id::Int)
+    if args.head != MuAST.FORMALARGS
+        throw(ArgumentError("Arguments must be `FORMALARGS`. Got $(args.head)"))
+    end
+    return CodeInfo(name, get_names(args), formalarg_to_signature(args), ir, id)
 end
 
 
@@ -108,11 +135,11 @@ function Base.show(io::IO, ir::IR)
     println(io, "| ", "-"^idx_width, " | ", "-"^irtype_width, " | ", "-"^40)
 
     for (idx, instr) in enumerate(instrs)
-        println(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.irtype), irtype_width),  " | ", instr)
+        println(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.irtype), irtype_width), " | ", instr)
     end
 end
 
- function Base.show(io::IO, codeinfo::CodeInfo)
+function Base.show(io::IO, codeinfo::CodeInfo)
     println(io, "function ", codeinfo.name, "(", codeinfo.args, ") (#= id: ", codeinfo.id, " =#)")
     println(io, codeinfo.ir)
     println(io, "end")
