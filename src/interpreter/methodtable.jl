@@ -83,32 +83,31 @@ function Base.show(io::IO, methodtable::MethodTable)
     name_width = max(10, maximum(length.(string.(keys(methodtable.table)))))
 
     if isempty(methodtable.table)
-        println("Empty method table.")
+        println(io, "Empty method table.")
     else
-        println("│ $(rpad("Name", name_width)) │ Signature")
+        println(io, "│ $(rpad("Name", name_width)) │ Signature")
     end
         
 
     for (name, methods) in methodtable.table
-        println("├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
-        print("│ $(lpad(name, name_width)) │ ")
+        println(io, "├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
+        print(io, "│ $(lpad(name, name_width)) │ ")
 
-        for (i, (signature, _, _)) in enumerate(methods)
-
+        for (signature, _, _) in methods
             if isempty(signature)
-                print("#= No arguments =#")
+                print(io,  "#= No arguments =#")
             end
            
             for (j, arg) in enumerate(signature)
-                print(arg)
+                print(io, arg)
                 if j < length(signature)
-                    print(", ")
+                    print(io, ", ")
                 end
             end
-            println()
-            print("│ $(repeat(" ", name_width)) │ ") # padding
+            println(io)
+            print(io, "│ $(repeat(" ", name_width)) │ ") # padding
         end
-        println()
+        println(io)
     end
 end
 
