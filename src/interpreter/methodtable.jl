@@ -173,7 +173,12 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
         end
     end
 
-    throw(ArgumentError("No method found matching the signature. Given signature: $expect_signature for method $name. Available signatures: $(map(x -> x[1], candidates))"))
+    throw(ArgumentError("""
+    No method found matching the signature. 
+    Given signature: $expect_signature
+    Candidates     : $(join([codeinfo.signature for codeinfo in candidates], "\n"))
+    """))
+
 end
 
 
