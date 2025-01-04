@@ -34,7 +34,11 @@ end
 
 # Direct embedding in arguments
 function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Literal, ir::MuIR.IR) end
-function add_subexpr!(expr::MuAST.Ident, myname::MuAST.Ident, ir::MuIR.IR) end
+function add_subexpr!(expr::MuAST.Ident, myname::MuAST.Ident, ir::MuIR.IR) 
+    if expr != myname
+        push!(ir, MuIR.Instr(MuIR.ASSIGN, MuAST.Expr(MuAST.ASSIGN, [myname, expr])))
+    end
+end
 
 function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Ident, ir::MuIR.IR)
     push!(
