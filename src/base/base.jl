@@ -170,6 +170,11 @@ function sub(x::Int){
 function sub(x::Float){
     return @neg_float(x)
 }
+
+function floor(x::Float){
+    return @floor(x)    
+}
+
 function print(s::Any){
     return @print(s)
 }
