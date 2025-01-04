@@ -164,7 +164,16 @@ function Base.show(io::IO, ir::IR)
 end
 
 function Base.show(io::IO, codeinfo::CodeInfo)
-    println(io, "function ", codeinfo.name, "(", codeinfo.args, ") (#= id: ", codeinfo.id, " =#)")
+    print(io, "function ", codeinfo.name, "(")
+    for i in 1:length(codeinfo.argname)
+        print(io, codeinfo.argname[i])
+        print(io, "::", codeinfo.signature[i])
+        if i < length(codeinfo.argname)
+            print(io, ", ")
+        end
+    end
+    println(io, ")")
+    println(io)
     println(io, codeinfo.ir)
     println(io, "end")
 end
