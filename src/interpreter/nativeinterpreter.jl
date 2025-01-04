@@ -162,37 +162,42 @@ end
 function interpret_local!(interp::NativeInterpreter, ir::MuIR.IR)
     frame = currentframe(interp)
 
-    while frame.pc <= length(ir)
-        instr = ir[frame.pc]
-        if instr.irtype == MuIR.ASSIGN
-            lhs, rhs = instr.expr.args
-            bind!(frame, lhs.name, execute_expr!(interp, rhs))
-            frame.pc += 1
-
-        elseif instr.irtype == MuIR.GOTO
-            dest = MuIR.get_dest(instr)
-            frame.pc = label_to_pc(interp, frame.method_id, dest)
-
-        elseif instr.irtype == MuIR.GOTOIFNOT
-            label, cond = instr.expr.args
-
-
-            if !execute_expr!(interp, cond)
-                frame.pc = label_to_pc(interp, frame.method_id, label)
-            else
+    try
+        while frame.pc <= length(ir)
+            instr = ir[frame.pc]
+            if instr.irtype == MuIR.ASSIGN
+                lhs, rhs = instr.expr.args
+                bind!(frame, lhs.name, execute_expr!(interp, rhs))
                 frame.pc += 1
+
+            elseif instr.irtype == MuIR.GOTO
+                dest = MuIR.get_dest(instr)
+                frame.pc = label_to_pc(interp, frame.method_id, dest)
+
+            elseif instr.irtype == MuIR.GOTOIFNOT
+                label, cond = instr.expr.args
+
+
+                if !execute_expr!(interp, cond)
+                    frame.pc = label_to_pc(interp, frame.method_id, label)
+                else
+                    frame.pc += 1
+                end
+
+            elseif instr.irtype == MuIR.RETURN
+                return execute_expr!(interp, MuIR.get_returnexpr(instr))
+
+            elseif instr.irtype == MuIR.LABEL
+                frame.pc += 1
+
+            else
+                throw(ArgumentError("Unknown IRType: $(instr.irtype)"))
             end
 
-        elseif instr.irtype == MuIR.RETURN
-            return execute_expr!(interp, MuIR.get_returnexpr(instr))
-
-        elseif instr.irtype == MuIR.LABEL
-            frame.pc += 1
-
-        else
-            throw(ArgumentError("Unknown IRType: $(instr.irtype)"))
         end
-
+    catch e
+        @error "Error: $e in method: $(codeinfo_by_id(interp.methodtable, frame.method_id).name) at $(ir[frame.pc])"
+        rethrow(e)
     end
 
     throw(ArgumentError("End of IR reached. Expected RETURN"))
