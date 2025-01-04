@@ -76,7 +76,7 @@ function injection!(interp::NativeInterpreter, codeinfo::MuIR.CodeInfo)
 
     for (idx, instr) in enumerate(codeinfo.ir)
         if instr.irtype == MuIR.LABEL
-            label = instr.expr.args[1]
+            label = MuIR.get_label(instr)
             interp.label_to_pc[codeinfo.id][label] = idx
         end
     end
@@ -151,8 +151,8 @@ function interpret_local!(interp::NativeInterpreter, ir::MuIR.IR)
             frame.pc += 1
 
         elseif instr.irtype == MuIR.GOTO
-            label = instr.expr.args[1]
-            frame.pc = label_to_pc(interp, frame.method_id, label)
+            dest = MuIR.get_dest(instr)
+            frame.pc = label_to_pc(interp, frame.method_id, dest)
 
         elseif instr.irtype == MuIR.GOTOIFNOT
             label, cond = instr.expr.args
@@ -165,7 +165,7 @@ function interpret_local!(interp::NativeInterpreter, ir::MuIR.IR)
             end
 
         elseif instr.irtype == MuIR.RETURN
-            return execute_expr!(interp, instr.expr.args[1])
+            return execute_expr!(interp, MuIR.get_returnexpr(instr))
 
         elseif instr.irtype == MuIR.LABEL
             frame.pc += 1

@@ -32,6 +32,30 @@ function Instr(irtype::IRType, expr::MuAST.Expr, typing::MuAST.Expr)
     return Instr(irtype, expr, typing)
 end
 
+function get_dest(instr::Instr)
+    if !(instr.irtype == GOTO || instr.irtype == GOTOIFNOT)
+        throw(ArgumentError("Expected GOTO or GOTOIFNOT. Got $(instr.irtype)"))
+    end
+
+    return instr.expr.args[1]
+end
+
+function get_label(instr::Instr)
+    if instr.irtype != LABEL
+        throw(ArgumentError("Expected LABEL. Got $(instr.irtype)"))
+    end
+
+    return instr.expr.args[1]
+end
+
+function get_returnexpr(instr::Instr)
+    if instr.irtype != RETURN
+        throw(ArgumentError("Expected RETURN. Got $(instr.irtype)"))
+    end
+
+    return instr.expr.args[1]
+end
+
 function Base.show(io::IO, instr::Instr)
     if instr.irtype == ASSIGN
         print(io, instr.expr.args[1].name, " = ", instr.expr.args[2])
