@@ -163,6 +163,13 @@ function sub(a::Float, b::Float){
     return @sub_float_float(a, b)
 }
 
+function sub(x::Int){
+    return @neg_int(x)
+}
+
+function sub(x::Float){
+    return @neg_float(x)
+}
 function print(s::Any){
     return @print(s)
 }

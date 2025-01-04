@@ -80,6 +80,8 @@ end
 @builtin or_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] || args[2]
 @builtin or_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] || args[2]
 
+@builtin neg_int(args::AbstractArray, env::Dict{String,Any}) = -args[1]
+@builtin neg_float(args::AbstractArray, env::Dict{String,Any}) = -args[1]
 @builtin parse_int(args::AbstractArray, env::Dict{String,Any}) = Base.parse(Int, args[1])
 @builtin parse_float(args::AbstractArray, env::Dict{String,Any}) = Base.parse(Float64, args[1])
 
