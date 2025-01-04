@@ -124,6 +124,17 @@ testcases = Dict(
             MuAST.Expr(MuAST.GCALL, [MuAST.Ident("neq"), 10, 20])
         )),
 
+        ("double(10) < 20", MuParse.relational) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("lt"),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("double"), 10]), 20])
+        )),
+        ("@mul_int_int(2, 3) == 2 * 3", MuParse.relational) => (isequal(
+            MuAST.Expr(MuAST.GCALL, [MuAST.Ident("eq"),
+                MuAST.Expr(MuAST.BCALL, [MuAST.Ident("mul_int_int"), 2, 3]),
+                MuAST.Expr(MuAST.GCALL, [MuAST.Ident("mul"), 2, 3])
+            ])
+        )),
+
         #
         # assign
         #
