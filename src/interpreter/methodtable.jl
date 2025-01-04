@@ -155,6 +155,9 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
 
     candidates = codeinfo_by_name(methodtable, name)
 
+    # filter by argument count (without filter, we can't sort by specificity)
+    candidates = filter(method -> length(method.signature) == length(expect_signature), candidates)
+
     # Sort by signatures "specificity"
     candidates = sort(candidates, lt=(a, b) -> specificity(a.signature, b.signature))
 
