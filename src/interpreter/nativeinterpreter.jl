@@ -35,6 +35,9 @@ function bind!(frame::Frame, name::String, value::Any)
 end
 
 function lookup(frame::Frame, name::String)
+    if !haskey(frame.env.bindings, name)
+        throw(ArgumentError("Name $name not found in frame. Available names: $(keys(frame.env.bindings))"))
+    end
     return frame.env.bindings[name]
 end
 
