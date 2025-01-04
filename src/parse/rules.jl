@@ -50,6 +50,7 @@ using PEG
 @rule primary = (
     grouped_expr,
     generics_call,
+    builtin_call,
     literal,
     ident, 
     array,
@@ -140,7 +141,7 @@ using PEG
 
 
 
-@rule expr = builtin_call, generics_call, relational
+@rule expr = relational
 
 @rule statement = _return, _function, assign, _if, _while, seq, expr
 
