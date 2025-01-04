@@ -43,6 +43,22 @@ end
 
 const CallStack = Vector{Frame}
 
+function Base.show(io::IO, frame::Frame)
+    println("┌ Method id: $(frame.method_id)")
+    println("│ PC: $(frame.pc)")
+    println("│ Env:", frame.env)
+    println("└")
+
+end
+
+function Base.show(io::IO, callstack::CallStack)
+    println("Call stack")
+    for frame in callstack
+        println(io, "─"^40)
+        println(frame)
+    end
+end
+
 mutable struct NativeInterpreter <: AbstractInterpreter
     # Method id -> label -> pc
     label_to_pc::Dict{Int,Dict{Int,Int}}
