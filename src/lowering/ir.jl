@@ -150,6 +150,11 @@ function Base.getindex(ir::IR, idx::Int)
 end
 
 function Base.show(io::IO, ir::IR)
+    if length(ir.instrs) == 0
+        println(io, "Empty IR")
+        return
+    end
+    
     instrs = ir.instrs
 
     idx_width = max(ndigits(length(instrs)), 3)
