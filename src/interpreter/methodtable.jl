@@ -39,7 +39,7 @@ end
 
 
 # Is is allowed to call a function with the given signature with the given actual arguments?
-function ismatch(signature::AbstractArray{DataType}, actual_args::AbstractArray{DataType})
+function ismatch(signature::AbstractArray, actual_args::AbstractArray)
     if length(signature) != length(actual_args)
         return false
     end
@@ -93,14 +93,14 @@ function Base.show(io::IO, methodtable::MethodTable)
         println(io, "├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
         print(io, "│ $(lpad(name, name_width)) │ ")
 
-        for (signature, _, _) in methods
-            if isempty(signature)
+        for method in methods
+            if isempty(method.signature)
                 print(io,  "#= No arguments =#")
             end
            
-            for (j, arg) in enumerate(signature)
+            for (j, arg) in enumerate(method.signature)
                 print(io, arg)
-                if j < length(signature)
+                if j < length(method.signature)
                     print(io, ", ")
                 end
             end
