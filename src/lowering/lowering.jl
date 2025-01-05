@@ -16,6 +16,8 @@ label_gen = id_gen()
 mi_gen = id_gen()
 _varname_gen = id_gen()
 
+RETURN_LABEL_ID = -1
+
 var_gen(arg::MuAST.Ident) = arg
 var_gen(arg::MuAST.Literal) = arg
 var_gen(arg) = MuAST.Ident("%$(_varname_gen())")
@@ -179,13 +181,33 @@ function _lowering(expr::MuAST.Expr)
         pushlabel!(ci, end_label_id)
 
     elseif expr.head == MuAST.RETURN
-        push!(ci, MuIR.Instr(MuIR.RETURN, expr))
+        # push!(ci, MuIR.Instr(MuIR.RETURN, expr))
+
+        # 
+        # return expr
+        # 
+        # ↓
+        # %ret = expr
+        # goto returnlabel
+        # ...
+        # label returnlabel       # <-- These labels are added by top level lowering. 
+        # return %ret             #     So we don't need to add them here.
+
+        pushfirst!(ci, MuIR.Instr(MuIR.ASSIGN, MuAST.Expr(MuAST.ASSIGN, [MuAST.RETURN_IDENT, expr.args[1]])))
+        push!(ci, MuIR.Instr(MuIR.GOTO, MuAST.Expr(MuAST.GOTO, [RETURN_LABEL_ID])))
+
     else
         throw(ArgumentError("Unsupported expression: $expr"))
     end
 
     return ci
 end
+
+function set_return_point!(ci::MuIR.CodeInfo)
+    push!(ci, MuIR.Instr(MuIR.LABEL, MuAST.Expr(MuAST.LABEL, [RETURN_LABEL_ID])))
+    push!(ci, MuIR.Instr(MuIR.RETURN, MuAST.Expr(MuAST.RETURN, [MuAST.RETURN_IDENT])))
+end
+
 
 
 # Interface of lowering.
@@ -199,8 +221,10 @@ function lowering(expr::MuAST.Expr)::MuIR.ProgramIR
 
         ci = _lowering(body)
 
+        set_return_point!(ci)
+
         mi = MuIR.MethodInstance(name, args, ci, mi_gen())
-    
+
         push!(lowerd, mi)
     end
 
