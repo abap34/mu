@@ -23,7 +23,8 @@ end
 
 const UNUSED_IDENT = Ident("_")
 
-const Literal = Union{Int,Float64,String,Bool,Array}
+const Literal = Union{Int,Float64,String,Bool,Array} 
+const SyntaxNode = Union{AbstractSyntaxNode, Literal}
 
 @enum ExprHead begin
     GCALL # Generic function call
