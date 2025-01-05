@@ -62,11 +62,28 @@ function Base.show(io::IO, instr::Instr)
     if instr.irtype == ASSIGN
         print(io, instr.expr.args[1].name, " = ", instr.expr.args[2])
     elseif instr.irtype == GOTO
-        print(io, "GOTO #", instr.expr.args[1])
+        dest = instr.expr.args[1]
+        if dest == -1
+            print(io, "GOTO RETURN")
+        else
+            print(io, "GOTO #", dest)
+        end
     elseif instr.irtype == GOTOIFNOT
-        print(io, "GOTO #", instr.expr.args[1], " IF NOT ", instr.expr.args[2])
+        dest = instr.expr.args[1]
+        if dest == -1
+            print(io, "GOTO RETURN IF NOT ", instr.expr.args[2])
+        else
+            print(io, "GOTO #", dest, " IF NOT ", instr.expr.args[2])
+        end
+
     elseif instr.irtype == LABEL
-        print(io, "LABEL #", instr.expr.args[1])
+        label = get_label(instr)    
+        if label == -1
+            print(io, "LABEL RETURN")
+        else
+            print(io, "LABEL #", label)
+        end
+
     elseif instr.irtype == RETURN
         print(io, "RETURN ", instr.expr.args[1])
     else
