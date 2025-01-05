@@ -193,16 +193,18 @@ function set(arr::AbstractArray, idx::Int, value::Any){
 """
 
 
-function load_base()::MuCore.MuIR.ProgramIR
+function load_base()::MuCore.MuInterpreter.MethodTable
+    methodtable = MuCore.MuInterpreter.MethodTable()
+
     ast = MuCore.parse(BASE)
-    lowerd = MuCore.lowering(ast)
-    return lowerd
-end
 
-
-function injection_base!(interp)
-    for f in load_base()
-        MuCore.MuInterpreter.injection!(interp, f)
+    for mi in MuCore.lowering(ast)
+        MuCore.MuInterpreter.add_method!(methodtable, mi)
     end
+
+    return methodtable
 end
+
+
+
 
