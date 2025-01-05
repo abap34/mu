@@ -5,7 +5,7 @@ import Base
 
 # [Type hierarchy]
 #                      Any
-#           ------------|-------------
+#           ------------|--------------
 #         /             |              \
 #       Number   AbstractString   AbstractArray
 #       /    \          |               |
@@ -93,6 +93,9 @@ issubtype(::Type{U}, ::Type{T}) where {T<:MuType,U<:Union} = all(issubtype(u, T)
 issubtype(::Type{T}, ::Type{U}) where {T<:MuType,U<:Union} = any(issubtype(u, T) for u in expand_types(U))
 
 issubtype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(supertype(S), T) || S == T
+
+⊓(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(S, T) ? S : issubtype(T, S) ? T : Union{S,T}
+
 
 Base.:(==)(::Type{U1}, ::Type{U2}) where {U1<:Union,U2<:Union} = Set(expand_types(U1)) == Set(expand_types(U2))
 
