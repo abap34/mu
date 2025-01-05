@@ -13,48 +13,48 @@ function id_gen()
 end
 
 label_gen = id_gen()
-codeinfo_gen = id_gen()
+mi_gen = id_gen()
 _varname_gen = id_gen()
 
 var_gen(arg::MuAST.Ident) = arg
 var_gen(arg::MuAST.Literal) = arg
 var_gen(arg) = MuAST.Ident("%$(_varname_gen())")
 
-function pushlabel!(ir::MuIR.IR, label::Int)
-    push!(ir, MuIR.Instr(MuIR.LABEL, MuAST.Expr(MuAST.LABEL, [label])))
+function pushlabel!(ci::MuIR.CodeInfo, label::Int)
+    push!(ci, MuIR.Instr(MuIR.LABEL, MuAST.Expr(MuAST.LABEL, [label])))
 end
 
-function pushgoto!(ir::MuIR.IR, label::Int)
-    push!(ir, MuIR.Instr(MuIR.GOTO, MuAST.Expr(MuAST.GOTO, [label])))
+function pushgoto!(ci::MuIR.CodeInfo, label::Int)
+    push!(ci, MuIR.Instr(MuIR.GOTO, MuAST.Expr(MuAST.GOTO, [label])))
 end
 
-function pushgotoifnot!(ir::MuIR.IR, label::Int, cond::MuAST.AbstractSyntaxNode)
-    push!(ir, MuIR.Instr(MuIR.GOTOIFNOT, MuAST.Expr(MuAST.GOTOIFNOT, [label, cond])))
+function pushgotoifnot!(ci::MuIR.CodeInfo, label::Int, cond::MuAST.SyntaxNode)
+    push!(ci, MuIR.Instr(MuIR.GOTOIFNOT, MuAST.Expr(MuAST.GOTOIFNOT, [label, cond])))
 end
 
 # Direct embedding in arguments
-function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Literal, ir::MuIR.IR) end
-function add_subexpr!(expr::MuAST.Ident, myname::MuAST.Ident, ir::MuIR.IR) 
+function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Literal, ci::MuIR.CodeInfo) end
+function add_subexpr!(expr::MuAST.Ident, myname::MuAST.Ident, ci::MuIR.CodeInfo)
     if expr != myname
-        push!(ir, MuIR.Instr(MuIR.ASSIGN, MuAST.Expr(MuAST.ASSIGN, [myname, expr])))
+        push!(ci, MuIR.Instr(MuIR.ASSIGN, MuAST.Expr(MuAST.ASSIGN, [myname, expr])))
     end
 end
 
-function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Ident, ir::MuIR.IR)
+function add_subexpr!(expr::MuAST.Literal, myname::MuAST.Ident, ci::MuIR.CodeInfo)
     push!(
-        ir,
+        ci,
         MuIR.Instr(MuIR.ASSIGN, MuAST.Expr(MuAST.ASSIGN, [myname, expr]))
     )
 end
 
 
-function add_subexpr!(expr::MuAST.Expr, myname::MuAST.Ident, ir::MuIR.IR)
+function add_subexpr!(expr::MuAST.Expr, myname::MuAST.Ident, ci::MuIR.CodeInfo)
     f, args... = expr.args
 
     tmpnames = [var_gen(arg) for arg in args]
 
     for (tmpname, subexpr) in zip(tmpnames, args)
-        add_subexpr!(subexpr, tmpname, ir)
+        add_subexpr!(subexpr, tmpname, ci)
     end
 
     assign_ast = MuAST.Expr(MuAST.ASSIGN, [myname, MuAST.Expr(expr.head, [f, tmpnames...])])
@@ -64,7 +64,8 @@ function add_subexpr!(expr::MuAST.Expr, myname::MuAST.Ident, ir::MuIR.IR)
         assign_ast
     )
 
-    push!(ir,
+    push!(
+        ci,
         assign_instr
     )
 end
@@ -72,32 +73,32 @@ end
 _lowering(x::MuAST.Literal) = x
 
 function _lowering(expr::MuAST.Expr)
-    ir = MuIR.IR()
+    ci = MuIR.CodeInfo()
 
     if expr.head == MuAST.GCALL || expr.head == MuAST.BCALL
-        call_ir = MuIR.IR()
+        call_ci = MuIR.CodeInfo()
 
-        add_subexpr!(expr, MuAST.UNUSED_IDENT, call_ir)
+        add_subexpr!(expr, MuAST.UNUSED_IDENT, call_ci)
 
-        append!(ir, call_ir)
+        append!(ci, call_ci)
 
     elseif expr.head == MuAST.ASSIGN
         ident, rhs = expr.args
 
-        rhs_ir = MuIR.IR()
+        rhs_ci = MuIR.CodeInfo()
 
-        add_subexpr!(rhs, ident, rhs_ir)
+        add_subexpr!(rhs, ident, rhs_ci)
 
-        append!(ir, rhs_ir)
+        append!(ci, rhs_ci)
 
     elseif expr.head == MuAST.BLOCK
         for arg in expr.args
-            append!(ir, _lowering(arg))
+            append!(ci, _lowering(arg))
         end
 
     elseif expr.head == MuAST.PROGRAM
         for arg in expr.args
-            append!(ir, _lowering(arg))
+            append!(ci, _lowering(arg))
         end
 
     elseif expr.head == MuAST.IFELSE
@@ -121,14 +122,14 @@ function _lowering(expr::MuAST.Expr)
         end_label_id = label_gen()
 
         cond_var = var_gen(cond)
-        add_subexpr!(cond, cond_var, ir)
+        add_subexpr!(cond, cond_var, ci)
 
-        pushgotoifnot!(ir, cond_label_id, cond_var)
-        append!(ir, _lowering(body))
-        pushgoto!(ir, end_label_id)
-        pushlabel!(ir, cond_label_id)
-        append!(ir, _lowering(elsebody))
-        pushlabel!(ir, end_label_id)
+        pushgotoifnot!(ci, cond_label_id, cond_var)
+        append!(ci, _lowering(body))
+        pushgoto!(ci, end_label_id)
+        pushlabel!(ci, cond_label_id)
+        append!(ci, _lowering(elsebody))
+        pushlabel!(ci, end_label_id)
 
     elseif expr.head == MuAST.IF
         # if cond 
@@ -143,13 +144,13 @@ function _lowering(expr::MuAST.Expr)
         cond, body = expr.args
 
         cond_label_id = label_gen()
-        
-        cond_var = var_gen(cond)
-        add_subexpr!(cond, cond_var, ir)
 
-        pushgotoifnot!(ir, cond_label_id, cond_var)
-        append!(ir, _lowering(body))
-        pushlabel!(ir, cond_label_id)
+        cond_var = var_gen(cond)
+        add_subexpr!(cond, cond_var, ci)
+
+        pushgotoifnot!(ci, cond_label_id, cond_var)
+        append!(ci, _lowering(body))
+        pushlabel!(ci, cond_label_id)
 
     elseif expr.head == MuAST.WHILE
         # while (cond) 
@@ -169,21 +170,21 @@ function _lowering(expr::MuAST.Expr)
 
         cond_var = var_gen(cond)
 
-        pushlabel!(ir, cond_label_id)
-        
-        add_subexpr!(cond, cond_var, ir)
-        pushgotoifnot!(ir, end_label_id, cond_var)
-        append!(ir, _lowering(body))
-        pushgoto!(ir, cond_label_id)
-        pushlabel!(ir, end_label_id)
+        pushlabel!(ci, cond_label_id)
+
+        add_subexpr!(cond, cond_var, ci)
+        pushgotoifnot!(ci, end_label_id, cond_var)
+        append!(ci, _lowering(body))
+        pushgoto!(ci, cond_label_id)
+        pushlabel!(ci, end_label_id)
 
     elseif expr.head == MuAST.RETURN
-        push!(ir, MuIR.Instr(MuIR.RETURN, expr))
+        push!(ci, MuIR.Instr(MuIR.RETURN, expr))
     else
         throw(ArgumentError("Unsupported expression: $expr"))
     end
 
-    return ir
+    return ci
 end
 
 
@@ -196,9 +197,11 @@ function lowering(expr::MuAST.Expr)::MuIR.ProgramIR
     for _function in expr.args
         name, args, body = _function.args
 
-        ir = _lowering(body)
+        ci = _lowering(body)
 
-        push!(lowerd, MuIR.CodeInfo(name, args, ir, codeinfo_gen()))
+        mi = MuIR.MethodInstance(name, args, ci, mi_gen())
+    
+        push!(lowerd, mi)
     end
 
     return lowerd

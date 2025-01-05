@@ -25,13 +25,13 @@ function run(filename::AbstractString, mode=:interpret)
     @assert mode in [:interpret, :compile] "Invalid mode: $mode. Must be either :interpret or :compile"
 
     ast = MuCore.parse_file(filename)
-    ir = MuCore.lowering(ast)
+    ci = MuCore.lowering(ast)
     if mode == :interpret
         interp = MuCore.MuInterpreter.NativeInterpreter()
 
         MuBase.injection_base!(interp)
 
-        MuCore.MuInterpreter.interpret(ir, interp)
+        MuCore.MuInterpreter.interpret(ci, interp)
 
     elseif mode == :compile
         # TODO

@@ -10,19 +10,19 @@ struct Env
 end
 
 function Base.show(io::IO, env::Env)
-    println("Env")
-    name_width = max(10, maximum(length.(string.(keys(env.bindings)))))
-    println("│ $(rpad("Name", name_width)) │ Value")
+    println(io, "Env")
+    name_width = maximum(length, string.(keys(env.bindings)), init=10)
+    println(io, "│ $(rpad("Name", name_width)) │ Value")
     for (name, value) in env.bindings
-        println("├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
-        print("│ $(lpad(name, name_width)) │ ")
-        println(value)
+        println(io, "├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
+        print(io, "│ $(lpad(name, name_width)) │ ")
+        println(io, value)
     end
 
 end
 
 mutable struct Frame
-    method_id::Int          # Method id
+    method_id::Int  # Method id
     pc::Int         # Program counter
     env::Env        # Environment
     function Frame(id::Int, pc::Int, env::Env)
@@ -76,8 +76,13 @@ function reset!(interp::NativeInterpreter)
 end
 
 function label_to_pc(interp::NativeInterpreter, method_id::Int, label::Int)
-    @assert haskey(interp.label_to_pc, method_id) "Method id $method_id not found in label_to_pc. Available method ids: $(keys(interp.label_to_pc))"
-    @assert haskey(interp.label_to_pc[method_id], label) "Label $label not found in label_to_pc[$method_id]. Available labels: $(keys(interp.label_to_pc[method_id])). Method ir:\n$(interp.methodtable.id_to_codeinfo[method_id].ir)"
+    if !haskey(interp.label_to_pc, method_id)
+        throw(ArgumentError("Method id $method_id not found in label_to_pc. Available method ids: $(keys(interp.label_to_pc))"))
+    end
+
+    if !haskey(interp.label_to_pc[method_id], label)
+        throw(ArgumentError("Label $label not found in label_to_pc[$method_id]. Available labels: $(keys(interp.label_to_pc[method_id])). Method: $(mi_by_id(interp.methodtable, method_id).name)"))
+    end
 
     return interp.label_to_pc[method_id][label]
 end
@@ -86,17 +91,17 @@ function currentframe(interp::NativeInterpreter)
     return interp.callstack[end]
 end
 
-function injection!(interp::NativeInterpreter, codeinfo::MuIR.CodeInfo)
+function injection!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
     # Register the method
-    add_method!(interp.methodtable, codeinfo)
+    add_method!(interp.methodtable, mi)
 
     # register method
-    interp.label_to_pc[codeinfo.id] = Dict{Int,Int}()
+    interp.label_to_pc[mi.id] = Dict{Int,Int}()
 
-    for (idx, instr) in enumerate(codeinfo.ir)
+    for (idx, instr) in enumerate(mi.ci)
         if instr.irtype == MuIR.LABEL
             label = MuIR.get_label(instr)
-            interp.label_to_pc[codeinfo.id][label] = idx
+            interp.label_to_pc[mi.id][label] = idx
         end
     end
 end
@@ -138,15 +143,15 @@ function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vect
     argtypes = [MuTypes.typeof(arg) for arg in argvalues]
     method_id = lookup(interp.methodtable, name, argtypes)
 
-    codeinfo = codeinfo_by_id(interp.methodtable, method_id)
+    mi = mi_by_id(interp.methodtable, method_id)
 
     push!(interp.callstack, Frame(method_id, 1, Env()))
 
-    for (name, value) in zip(codeinfo.argname, argvalues)
+    for (name, value) in zip(mi.argname, argvalues)
         bind!(currentframe(interp), name.name, value)
     end
 
-    result = interpret_local!(interp, codeinfo.ir)
+    result = interpret_local!(interp, mi)
 
     pop!(interp.callstack)
 
@@ -159,12 +164,13 @@ function call_builtin!(interp::NativeInterpreter, name::MuAST.Ident, args::Vecto
 end
 
 
-function interpret_local!(interp::NativeInterpreter, ir::MuIR.IR)
+function interpret_local!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
     frame = currentframe(interp)
+    ci = mi.ci
 
     try
-        while frame.pc <= length(ir)
-            instr = ir[frame.pc]
+        while frame.pc <= length(ci)
+            instr = ci[frame.pc]
             if instr.irtype == MuIR.ASSIGN
                 lhs, rhs = instr.expr.args
                 bind!(frame, lhs.name, execute_expr!(interp, rhs))
@@ -185,7 +191,7 @@ function interpret_local!(interp::NativeInterpreter, ir::MuIR.IR)
                 end
 
             elseif instr.irtype == MuIR.RETURN
-                return execute_expr!(interp, MuIR.get_returnexpr(instr))
+                return execute_expr!(interp, MuIR.get_returnbody(instr))
 
             elseif instr.irtype == MuIR.LABEL
                 frame.pc += 1
@@ -196,7 +202,7 @@ function interpret_local!(interp::NativeInterpreter, ir::MuIR.IR)
 
         end
     catch e
-        @error "Error: $e in method: $(codeinfo_by_id(interp.methodtable, frame.method_id).name) at $(ir[frame.pc])"
+        @error "Error: $e in method: $(mi_by_id(interp.methodtable, frame.method_id).name) at $(ir[frame.pc])"
         rethrow(e)
     end
 
@@ -213,9 +219,9 @@ function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
 
     push!(interp.callstack, Frame(main_id, 1, Env()))
 
-    main_ir = codeinfo_by_id(interp.methodtable, main_id).ir
+    main_mi = mi_by_id(interp.methodtable, main_id)
 
-    interpret_local!(interp, main_ir)
+    interpret_local!(interp, main_mi)
 end
 
 function interpret(program::MuIR.ProgramIR)

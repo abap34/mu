@@ -13,8 +13,8 @@ function specificity(t1::AbstractArray{DataType}, t2::AbstractArray{DataType})
             throw(ArgumentError("All signature must be MuTypes. Got $t2"))
         end
     end
-    
-    
+
+
     if length(t1) != length(t2)
         throw(ArgumentError("t1 and t2 must have the same length. Got $t1 (length: $(length(t1))) and $t2 (length: $(length(t2)))"))
     end
@@ -65,10 +65,10 @@ end
 
 # Wrapper for a dictionary of method tables
 struct MethodTable
-    # Function name -> Vector of CodeInfo 
-    table::Dict{MuAST.Ident, Vector{MuIR.CodeInfo}}
+    # Function name -> Vector of MethodInstance
+    table::Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}
     function MethodTable()
-        new(Dict{MuAST.Ident, Vector{MuIR.CodeInfo}}())
+        new(Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}())
     end
 end
 
@@ -79,7 +79,7 @@ function Base.show(io::IO, methodtable::MethodTable)
     end
 
     println(io, "MethodTable:")
-   
+
     name_width = max(10, maximum(length.(string.(keys(methodtable.table)))))
 
     if isempty(methodtable.table)
@@ -87,7 +87,7 @@ function Base.show(io::IO, methodtable::MethodTable)
     else
         println(io, "│ $(rpad("Name", name_width)) │ Signature")
     end
-        
+
 
     for (name, methods) in methodtable.table
         println(io, "├ $(repeat("─", name_width)) ┼ $(repeat("─", 40)) ")
@@ -95,9 +95,9 @@ function Base.show(io::IO, methodtable::MethodTable)
 
         for method in methods
             if isempty(method.signature)
-                print(io,  "#= No arguments =#")
+                print(io, "#= No arguments =#")
             end
-           
+
             for (j, arg) in enumerate(method.signature)
                 print(io, arg)
                 if j < length(method.signature)
@@ -115,15 +115,15 @@ function method_names(methodtable::MethodTable)
     return keys(methodtable.table)
 end
 
-function add_method!(methodtable::MethodTable, codeinfo::MuIR.CodeInfo)
-    if !haskey(methodtable.table, codeinfo.name)
-        methodtable.table[codeinfo.name] = Vector{MuIR.CodeInfo}()
+function add_method!(methodtable::MethodTable, mi::MuIR.MethodInstance)
+    if !haskey(methodtable.table, mi.name)
+        methodtable.table[mi.name] = Vector{MuIR.MethodInstance}()
     end
 
-    push!(methodtable.table[codeinfo.name], codeinfo)
+    push!(methodtable.table[mi.name], mi)
 end
 
-function codeinfo_by_id(methodtable::MethodTable, id::Int)
+function mi_by_id(methodtable::MethodTable, id::Int)::MuIR.MethodInstance
     for (_, methods) in methodtable.table
         for method in methods
             if method.id == id
@@ -136,7 +136,7 @@ function codeinfo_by_id(methodtable::MethodTable, id::Int)
 end
 
 
-function codeinfo_by_name(methodtable::MethodTable, name::MuAST.Ident)
+function mis_by_name(methodtable::MethodTable, name::MuAST.Ident)::Vector{MuIR.MethodInstance}
     if !haskey(methodtable.table, name)
         throw(ArgumentError("Method $name not found in method table. Available methods: $(method_names(methodtable))"))
     end
@@ -151,9 +151,9 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
 
     if !haskey(methodtable.table, name)
         throw(ArgumentError("Method $name not found in method table. Available methods: $(method_names(methodtable))"))
-    end     
+    end
 
-    candidates = codeinfo_by_name(methodtable, name)
+    candidates = mis_by_name(methodtable, name)
 
     # filter by argument count (without filter, we can't sort by specificity)
     candidates = filter(method -> length(method.signature) == length(expect_signature), candidates)
@@ -162,21 +162,21 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
     candidates = sort(candidates, lt=(a, b) -> specificity(a.signature, b.signature))
 
     # Find the first method which matches the signature
-    for (i, codeinfo) in enumerate(candidates)
-        if ismatch(codeinfo.signature, expect_signature)
+    for (i, mi) in enumerate(candidates)
+        if ismatch(mi.signature, expect_signature)
             # Check next candidate is same specificity and matches. 
             # If so, throw and `AmbiguousMethodError`
-            if i < length(candidates) && specificity(candidates[i+1].signature, codeinfo.signature)
+            if i < length(candidates) && specificity(candidates[i+1].signature, mi.signature)
                 throw(AmbiguousMethodError("Ambiguous method call. Multiple methods match the signature."))
             end
-            return codeinfo.id
+            return mi.id
         end
     end
 
     throw(ArgumentError("""
     No method found matching the signature. 
     Given signature: $expect_signature
-    Candidates     : $(join([codeinfo.signature for codeinfo in candidates], "\n"))
+    Candidates     : $(join([mi.signature for mi in candidates], "\n"))
     """))
 
 end

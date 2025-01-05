@@ -195,8 +195,8 @@ function set(arr::AbstractArray, idx::Int, value::Any){
 
 function load_base()::MuCore.MuIR.ProgramIR
     ast = MuCore.parse(BASE)
-    ir = MuCore.lowering(ast)
-    return ir
+    lowerd = MuCore.lowering(ast)
+    return lowerd
 end
 
 
