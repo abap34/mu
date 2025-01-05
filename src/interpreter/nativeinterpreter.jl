@@ -64,8 +64,8 @@ mutable struct NativeInterpreter <: AbstractInterpreter
     label_to_pc::Dict{Int,Dict{Int,Int}}
     methodtable::MethodTable
     callstack::CallStack
-    function NativeInterpreter()
-        new(Dict{Int,Int}(), MethodTable(), CallStack())
+    function NativeInterpreter(;label_to_pc=Dict{Int,Dict{Int,Int}}(), methodtable=MethodTable(), callstack=CallStack())
+        new(label_to_pc, methodtable, callstack)
     end
 end
 
