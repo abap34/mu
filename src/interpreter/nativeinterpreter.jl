@@ -202,7 +202,7 @@ function interpret_local!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
 
         end
     catch e
-        @error "Error: $e in method: $(mi_by_id(interp.methodtable, frame.method_id).name) at $(ir[frame.pc])"
+        @error "Error: $e in method: $(mi_by_id(interp.methodtable, frame.method_id).name) at $(ci[frame.pc])"
         rethrow(e)
     end
 
