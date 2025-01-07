@@ -129,6 +129,36 @@ function _str_to_type(name::Base.String)
     end
 end
 
+function shorten_str(t::Type)
+    if t == Any
+        return "Any"
+    elseif t == Number
+        return "Number"
+    elseif t == Real
+        return "Real"
+    elseif t == Int
+        return "Int"
+    elseif t == Float
+        return "Float"
+    elseif t == Bool
+        return "Bool"
+    elseif t == AbstractString
+        return "AbstractString"
+    elseif t == String
+        return "String"
+    elseif t == AbstractArray
+        return "AbstractArray"
+    elseif t == Bottom
+        return "Bottom"
+    elseif t isa Array
+        return "Array{" * shorten_str(t.elemtype) * ", " * string(t.dim) * "}"
+    elseif t isa Union
+        return "Union{" * join([shorten_str(x) for x in expand_types(t)], ", ") * "}"
+    else
+        throw(ArgumentError("Unknown type: $t"))
+    end
+end
+
 function _type_to_mutype(t::DataType)
     if t == Base.Any
         return Any
@@ -209,6 +239,7 @@ function typeof(v)
         throw(ArgumentError("Unknown Value!: $v $(Base.typeof(v)). Only Int, Float64, String, Bool, Array are supported."))
     end
 end
+
 
 export MuType
 
