@@ -2,8 +2,6 @@ module mu
 
 module MuCore
 
-
-
 include("parse/parse.jl")
 
 include("types/types.jl")
@@ -11,6 +9,8 @@ include("types/types.jl")
 include("lowering/lowering.jl")
 include("builtin/builtin.jl")
 include("interpreter/interpreter.jl")
+
+include("typeinf/typeinf.jl")
 
 end # module MuCore
 
