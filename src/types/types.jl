@@ -129,7 +129,7 @@ function _str_to_type(name::Base.String)
     end
 end
 
-function shorten_str(t::Type)
+function shorten_str(t::DataType)
     if t == Any
         return "Any"
     elseif t == Number
@@ -155,7 +155,7 @@ function shorten_str(t::Type)
     elseif t isa Union
         return "Union{" * join([shorten_str(x) for x in expand_types(t)], ", ") * "}"
     else
-        throw(ArgumentError("Unknown type: $t"))
+        return string(t)
     end
 end
 
