@@ -115,6 +115,12 @@ function method_names(methodtable::MethodTable)
     return keys(methodtable.table)
 end
 
+function load!(methodtable::MethodTable, lowered::MuIR.ProgramIR)
+    for mi in lowered
+        add_method!(methodtable, mi)
+    end
+end
+
 function add_method!(methodtable::MethodTable, mi::MuIR.MethodInstance)
     if !haskey(methodtable.table, mi.name)
         methodtable.table[mi.name] = Vector{MuIR.MethodInstance}()

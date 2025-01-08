@@ -211,9 +211,7 @@ end
 
 
 function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
-    for f in program
-        injection!(interp, f)
-    end
+    load!(interp.methodtable, program)
 
     main_id = lookup(interp.methodtable, MuAST.Ident("main"), DataType[])
 
