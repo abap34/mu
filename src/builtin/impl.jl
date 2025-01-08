@@ -63,4 +63,4 @@
 
 @builtin length(args::AbstractArray, env::Dict{String,Any}) = Base.length(args[1])
 @builtin get(args::AbstractArray, env::Dict{String,Any}) = args[1][args[2]]
-@builtin set(args::AbstractArray, env::Dict{String,Any}) = (args[1][args[2]] = args[3]; return args[0])
+@builtin set(args::AbstractArray, env::Dict{String,Any}) = (args[1][args[2]] = args[3]; return 0)
