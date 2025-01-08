@@ -157,7 +157,7 @@ end
 
 
 # Lookup a method in the method table by name and signature and return the method id
-function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::AbstractArray)::Int
+function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::AbstractArray; exact_match::Bool=false)::Vector{Int}
     @assert all(sig -> sig <: MuTypes.MuType, expect_signature) "All arguments must be MuType. Got $expect_signature"
 
     if !haskey(methodtable.table, name)
@@ -172,24 +172,34 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
     # Sort by signatures "specificity"
     candidates = sort(candidates, lt=(a, b) -> specificity(a.signature, b.signature))
 
+    match_methods = Int[]
+
     # Find the first method which matches the signature
     for (i, mi) in enumerate(candidates)
         if ismatch(mi.signature, expect_signature)
             # Check next candidate is same specificity and matches. 
             # If so, throw and `AmbiguousMethodError`
-            if i < length(candidates) && specificity(candidates[i+1].signature, mi.signature)
-                throw(AmbiguousMethodError("Ambiguous method call. Multiple methods match the signature."))
+            if exact_match
+                if i < length(candidates) && specificity(candidates[i+1].signature, mi.signature)
+                    throw(AmbiguousMethodError("Ambiguous method call. Multiple methods match the signature."))
+                end
+                return [mi.id,]
+            else
+                push!(match_methods, mi.id)
             end
-            return mi.id
         end
     end
 
-    throw(ArgumentError("""
-    No method found matching the signature. 
-    Given signature: $expect_signature
-    Candidates     : $(join([mi.signature for mi in candidates], "\n"))
-    """))
 
+    if exact_match && isempty(match_methods)
+        throw(ArgumentError("""
+            No method found matching the signature. 
+            Given signature: $expect_signature
+            Candidates     : $(join([mi.signature for mi in candidates], "\n"))
+            """))
+    end
+
+    return match_methods
 end
 
 
