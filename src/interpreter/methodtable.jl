@@ -72,6 +72,14 @@ struct MethodTable
     end
 end
 
+function methodnames(methodtable::MethodTable)
+    return keys(methodtable.table)
+end
+
+function methodinstances(methodtable::MethodTable)
+    return Iterators.flatten(values(methodtable.table))
+end
+
 function Base.show(io::IO, methodtable::MethodTable)
     if isempty(methodtable.table)
         print(io, "MethodTable(Dict{}()) (empty)")
@@ -106,7 +114,6 @@ function Base.show(io::IO, methodtable::MethodTable)
                     print(io, ", ")
                 end
             end
-            println(io, ")")
             println(io, ") (id: $(method.id))")
             
 
