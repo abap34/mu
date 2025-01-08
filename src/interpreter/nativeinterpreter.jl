@@ -69,6 +69,22 @@ mutable struct NativeInterpreter <: AbstractInterpreter
     end
 end
 
+function Base.show(io::IO, interp::NativeInterpreter)
+    println(io, typeof(interp))
+    println(io, "─ Label to PC")
+    for (method_id, labels) in interp.label_to_pc
+        println(io, "     ├ Method id: $method_id (", mi_by_id(interp.methodtable, method_id).name, ")")
+        for (label, pc) in labels
+            println(io, "        │ Label: $label -> PC: $pc")
+        end
+    end
+
+    println(interp.methodtable)
+
+    println(interp.callstack)
+
+end
+
 function reset!(interp::NativeInterpreter)
     interp.label_to_pc = Dict{Int,Dict{Int,Int}}()
     interp.methodtable = MethodTable()
