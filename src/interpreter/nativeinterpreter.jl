@@ -107,17 +107,15 @@ function currentframe(interp::NativeInterpreter)
     return interp.callstack[end]
 end
 
-function injection!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
-    # Register the method
-    add_method!(interp.methodtable, mi)
+function setup_labels!(interp::NativeInterpreter)
+    for mi in methodinstances(interp.methodtable)
+        interp.label_to_pc[mi.id] = Dict{Int,Int}()
 
-    # register method
-    interp.label_to_pc[mi.id] = Dict{Int,Int}()
-
-    for (idx, instr) in enumerate(mi.ci)
-        if instr.irtype == MuIR.LABEL
-            label = MuIR.get_label(instr)
-            interp.label_to_pc[mi.id][label] = idx
+        for (idx, instr) in enumerate(mi.ci)
+            if instr.irtype == MuIR.LABEL
+                label = MuIR.get_label(instr)
+                interp.label_to_pc[mi.id][label] = idx
+            end
         end
     end
 end
@@ -157,8 +155,7 @@ function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vect
 
     argvalues = [execute_expr!(interp, arg) for arg in args]
     argtypes = [MuTypes.typeof(arg) for arg in argvalues]
-    method_id = lookup(interp.methodtable, name, argtypes)
-
+    method_id = first(lookup(interp.methodtable, name, argtypes, exact_match=true))
     mi = mi_by_id(interp.methodtable, method_id)
 
     push!(interp.callstack, Frame(method_id, 1, Env()))
@@ -229,7 +226,9 @@ end
 function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
     load!(interp.methodtable, program)
 
-    main_id = lookup(interp.methodtable, MuAST.Ident("main"), DataType[])
+    setup_labels!(interp)
+    
+    main_id = first(lookup(interp.methodtable, MuAST.Ident("main"), DataType[], exact_match=true))
 
     push!(interp.callstack, Frame(main_id, 1, Env()))
 
