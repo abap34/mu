@@ -107,6 +107,8 @@ function Base.show(io::IO, methodtable::MethodTable)
                 end
             end
             println(io, ")")
+            println(io, ") (id: $(method.id))")
+            
 
             print(io, "│ $(repeat(" ", name_width)) │ ") # padding
         end
