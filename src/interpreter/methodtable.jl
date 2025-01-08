@@ -78,14 +78,15 @@ function Base.show(io::IO, methodtable::MethodTable)
         return
     end
 
-    println(io, "MethodTable:")
+    println(io, typeof(methodtable), " with $(length(methodtable.table)) entries")
+
 
     name_width = max(10, maximum(length.(string.(keys(methodtable.table)))))
 
     if isempty(methodtable.table)
         println(io, "Empty method table.")
     else
-        println(io, "│ $(rpad("Name", name_width)) │ Signature")
+        println(io, "│ $(lpad("Name", name_width)) │ Signature")
     end
 
 
@@ -98,13 +99,15 @@ function Base.show(io::IO, methodtable::MethodTable)
                 print(io, "#= No arguments =#")
             end
 
+            print(io, "(")
             for (j, arg) in enumerate(method.signature)
-                print(io, arg)
+                print(io, MuTypes.shorten_str(arg))
                 if j < length(method.signature)
                     print(io, ", ")
                 end
             end
-            println(io)
+            println(io, ")")
+
             print(io, "│ $(repeat(" ", name_width)) │ ") # padding
         end
         println(io)
