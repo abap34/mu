@@ -68,10 +68,11 @@ end
 
 struct AbstractState{T}
     state::Dict{MuAST.Ident,T}
+    mt::MuInterpreter.MethodTable
 end
 
-function AbstractState(T::Type)
-    AbstractState{T}(Dict{MuAST.Ident,T}())
+function AbstractState(T::Type; mt::MuInterpreter.MethodTable=MuInterpreter.MethodTable())
+    AbstractState{T}(Dict{MuAST.Ident,T}(), mt)
 end
 
 
@@ -159,21 +160,22 @@ function Base.:(==)(state1::AbstractState{T}, state2::AbstractState{T})::Bool wh
 end
 
 function Base.copy(state::AbstractState{T})::AbstractState{T} where {T}
-    AbstractState{T}(copy(state.state))
+    AbstractState{T}(copy(state.state), state.mt)
 end
 
 include("abstractsemantics.jl")
 include("solver.jl")
 
 # Interface for type inference
-function infer_type(mi::MuIR.MethodInstance; argtypes::AbstractArray)
-    initstate = AbstractState(DataType)
+function infer(mi::MuIR.MethodInstance; argtypes::AbstractArray, mt::MuInterpreter.MethodTable)
+    initstate = AbstractState(DataType, mt=mt)
 
     for (argname, argtype) in zip(mi.argname, argtypes)
-        bind!(initstate, MuAST.Ident(argname), argtype)
+        bind!(initstate, argname, argtype)
     end
-    
-    infered_state = abstract_interpret(
+
+
+    inferedframe = abstract_interpret(
         mi,
         abstract_semantics,
         ∇,
@@ -181,6 +183,9 @@ function infer_type(mi::MuIR.MethodInstance; argtypes::AbstractArray)
     )
 
     return lookup(return_type(infered_state), MuAST.RETURN_IDENT)
+    return inferedframe
+end
+
 end
 
 
