@@ -1,9 +1,40 @@
 function _abstract_builtincall(f, arg_abstractvalues)
     return MuBuiltins.get_tfuncs(f.name)(arg_abstractvalues)
 end
-function _abstract_genericscall(f, arg_abstractvalues)
-    # TODO
-    throw(ArgumentError("Generics call not implemented yet"))
+function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)
+    mt = astate.mt
+
+    macthed_methods = MuInterpreter.lookup(
+        mt,
+        f,
+        arg_abstractvalues,
+        matching=:possible
+    )
+
+    joined_type = MuTypes.Bottom
+
+    if length(macthed_methods) == 0
+        throw(ArgumentError("No method found for $(f) with arguments $(arg_abstractvalues)"))
+    elseif length(macthed_methods) > 1
+        throw(ArgumentError("Multiple methods found for $(f) with arguments $(arg_abstractvalues)"))
+        for method_id in macthed_methods
+            mi = MuInterpreter.mi_by_id(mt, method_id)
+            @info "Method $(mi.name) found with arguments $(arg_abstractvalues)"
+        end
+    end
+
+    for method_id in macthed_methods
+        mi = MuInterpreter.mi_by_id(mt, method_id)
+        mi_return_type = return_type(mi, argtypes=arg_abstractvalues, mt=mt)
+
+        # @info "Method $(mi.name) inferred return type: $(mi_return_type)"
+
+        joined_type = MuTypes.jointype(joined_type, mi_return_type)
+
+        # @info "Joined type: $(joined_type)"
+    end
+
+    return joined_type
 end
 
 function _abstract_execute(expr::MuAST.Ident, astate::AbstractState)
@@ -37,7 +68,7 @@ function _abstract_execute(expr::MuAST.Expr, astate::AbstractState)
     if expr.head == MuAST.BCALL
         return _abstract_builtincall(f, arg_abstractvalues)
     elseif expr.head == MuAST.GCALL
-        return _abstract_genericscall(f, arg_abstractvalues)
+        return _abstract_genericscall(f, arg_abstractvalues, astate)
     else
         throw(ArgumentError("Unknown expression type: $(expr.head). Expected `IDENT`, `LITERAL`, `BCALL`, or `GCALL`"))
     end

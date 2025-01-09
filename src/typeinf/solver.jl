@@ -61,9 +61,9 @@ function abstract_interpret(
     while true
         changed = false
         for i in 1:n
-            new_input = reduce(⊓, frame.outputs[j] for j in pred[i]; init=copy(initstate))
+            new_input::AbstractState = reduce(⊓, frame.outputs[j] for j in pred[i]; init=copy(initstate))
             try
-                new_output = abstract_semantics(ci[i])(new_input)
+                new_output::AbstractState = abstract_semantics(ci[i])(new_input)
                 changed = update!(frame, i, new_input, new_output)
             catch e
                 @error "Failed to interpret instruction: $(ci[i])" exception = e
