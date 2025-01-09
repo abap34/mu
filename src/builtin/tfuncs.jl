@@ -63,7 +63,11 @@ set_constant!("length",         MuTypes.Int)
 # `set` always return 0.
 set_constant!("set",            MuTypes.Int)
 
-function arrget_tfunc(argtypes::Vector{MuTypes.MuType})::MuTypes.MuType
+function arrget_tfunc(argtypes::Vector{DataType})
+    if isempty(argtypes[1].parameters) 
+        @warn "Try to get from $(argtypes[1])"
+        return MuTypes.Bottom
+    end
     return argtypes[1].parameters[1]
 end
 
