@@ -37,31 +37,15 @@ function eq(a::Int, b::Int){
     return @eq_int_int(a, b)
 }
 
-function eq(a::Int, b::Float){
-    return @eq_int_float(a, b)
-}
-
-function eq(a::Float, b::Int){
-    return @eq_float_int(a, b)
-}
 
 function eq(a::Float, b::Float){
     return @eq_float_float(a, b)
 }
 
-
-
 function gt(a::Int, b::Int){
     return @gt_int_int(a, b)
 }
 
-function gt(a::Int, b::Float){
-    return @gt_int_float(a, b)
-}
-
-function gt(a::Float, b::Int){
-    return @gt_float_int(a, b)
-}
 
 function gt(a::Float, b::Float){
     return @gt_float_float(a, b)
@@ -71,13 +55,6 @@ function le(a::Int, b::Int){
     return @le_int_int(a, b)
 }
 
-function le(a::Int, b::Float){
-    return @le_int_float(a, b)
-}
-
-function le(a::Float, b::Int){
-    return @le_float_int(a, b)
-}
 
 function le(a::Float, b::Float){
     return @le_float_float(a, b)
@@ -87,13 +64,6 @@ function lt(a::Int, b::Int){
     return @lt_int_int(a, b)
 }
 
-function lt(a::Int, b::Float){
-    return @lt_int_float(a, b)
-}
-
-function lt(a::Float, b::Int){
-    return @lt_float_int(a, b)
-}
 
 function lt(a::Float, b::Float){
     return @lt_float_float(a, b)
