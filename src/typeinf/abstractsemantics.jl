@@ -13,25 +13,10 @@ function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)
 
     joined_type = MuTypes.Bottom
 
-    if length(macthed_methods) == 0
-        throw(ArgumentError("No method found for $(f) with arguments $(arg_abstractvalues)"))
-    elseif length(macthed_methods) > 1
-        throw(ArgumentError("Multiple methods found for $(f) with arguments $(arg_abstractvalues)"))
-        for method_id in macthed_methods
-            mi = MuInterpreter.mi_by_id(mt, method_id)
-            @info "Method $(mi.name) found with arguments $(arg_abstractvalues)"
-        end
-    end
-
     for method_id in macthed_methods
         mi = MuInterpreter.mi_by_id(mt, method_id)
         mi_return_type = return_type(mi, argtypes=arg_abstractvalues, mt=mt)
-
-        # @info "Method $(mi.name) inferred return type: $(mi_return_type)"
-
         joined_type = MuTypes.jointype(joined_type, mi_return_type)
-
-        # @info "Joined type: $(joined_type)"
     end
 
     return joined_type
