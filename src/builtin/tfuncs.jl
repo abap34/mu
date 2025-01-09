@@ -1,69 +1,58 @@
-set_constant!("throw",          MuTypes.Bottom)
+set_constant!("throw",          [], MuTypes.Bottom)
+set_constant!("add_int_int",    [MuTypes.Int, MuTypes.Int], MuTypes.Int)
+set_constant!("add_int_float",  [MuTypes.Int, MuTypes.Float], MuTypes.Float)
+set_constant!("add_float_int",  [MuTypes.Float, MuTypes.Int], MuTypes.Float)
+set_constant!("add_float_float",[MuTypes.Float, MuTypes.Float], MuTypes.Float)
+set_constant!("sub_int_int",    [MuTypes.Int, MuTypes.Int], MuTypes.Int)
+set_constant!("sub_int_float",  [MuTypes.Int, MuTypes.Float], MuTypes.Float)
+set_constant!("sub_float_int",  [MuTypes.Float, MuTypes.Int], MuTypes.Float)
+set_constant!("sub_float_float",[MuTypes.Float, MuTypes.Float], MuTypes.Float)
+set_constant!("mul_int_int",    [MuTypes.Int, MuTypes.Int], MuTypes.Int)
+set_constant!("mul_int_float",  [MuTypes.Int, MuTypes.Float], MuTypes.Float)
+set_constant!("mul_float_int",  [MuTypes.Float, MuTypes.Int], MuTypes.Float)
+set_constant!("mul_float_float",[MuTypes.Float, MuTypes.Float], MuTypes.Float)
+set_constant!("div_int_int",    [MuTypes.Int, MuTypes.Int], MuTypes.Float)
+set_constant!("div_int_float",  [MuTypes.Int, MuTypes.Float], MuTypes.Float)
+set_constant!("div_float_int",  [MuTypes.Float, MuTypes.Int], MuTypes.Float)
+set_constant!("div_float_float",[MuTypes.Float, MuTypes.Float], MuTypes.Float)
+set_constant!("mod_int_int",    [MuTypes.Int, MuTypes.Int], MuTypes.Int)
 
-set_constant!("add_int_int",    MuTypes.Int)
+set_constant!("eq_int_int",     [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("eq_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Bool)
 
-set_constant!("add_int_float",  MuTypes.Float)
-set_constant!("add_float_int",  MuTypes.Float)
-set_constant!("add_float_float",MuTypes.Float)
-set_constant!("sub_int_int",    MuTypes.Int)
-set_constant!("sub_int_float",  MuTypes.Float)
-set_constant!("sub_float_int",  MuTypes.Float)
-set_constant!("sub_float_float",MuTypes.Float)
-set_constant!("mul_int_int",    MuTypes.Int)
-set_constant!("mul_int_float",  MuTypes.Float)
-set_constant!("mul_float_int",  MuTypes.Float)
-set_constant!("mul_float_float",MuTypes.Float)
-set_constant!("div_int_int",    MuTypes.Float)
-set_constant!("div_int_float",  MuTypes.Float)
-set_constant!("div_float_int",  MuTypes.Float)
-set_constant!("div_float_float",MuTypes.Float)
-set_constant!("mod_int_int",    MuTypes.Int)
-set_constant!("eq_int_int",     MuTypes.Bool)
-set_constant!("eq_int_float",   MuTypes.Bool)
-set_constant!("eq_float_int",   MuTypes.Bool)
-set_constant!("eq_float_float", MuTypes.Bool)
-set_constant!("neq_int_int",    MuTypes.Bool)
-set_constant!("neq_int_float",  MuTypes.Bool)
-set_constant!("neq_float_int",  MuTypes.Bool)
-set_constant!("neq_float_float",MuTypes.Bool)
-set_constant!("lt_int_int",     MuTypes.Bool)
-set_constant!("lt_int_float",   MuTypes.Bool)
-set_constant!("lt_float_int",   MuTypes.Bool)
-set_constant!("lt_float_float", MuTypes.Bool)
-set_constant!("gt_int_int",     MuTypes.Bool)
-set_constant!("gt_int_float",   MuTypes.Bool)
-set_constant!("gt_float_int",   MuTypes.Bool)
-set_constant!("gt_float_float", MuTypes.Bool)
-set_constant!("le_int_int",     MuTypes.Bool)
-set_constant!("le_int_float",   MuTypes.Bool)
-set_constant!("le_float_int",   MuTypes.Bool)
-set_constant!("le_float_float", MuTypes.Bool)
-set_constant!("ge_int_int",     MuTypes.Bool)
-set_constant!("ge_int_float",   MuTypes.Bool)
-set_constant!("ge_float_int",   MuTypes.Bool)
-set_constant!("ge_float_float", MuTypes.Bool)
-set_constant!("and_int_int",    MuTypes.Bool)
-set_constant!("and_int_float",  MuTypes.Bool)
-set_constant!("and_float_int",  MuTypes.Bool)
-set_constant!("and_float_float",MuTypes.Bool)
-set_constant!("or_int_int",     MuTypes.Bool)
-set_constant!("or_int_float",   MuTypes.Bool)
-set_constant!("or_float_int",   MuTypes.Bool)
-set_constant!("or_float_float", MuTypes.Bool)
-set_constant!("neg_int",        MuTypes.Int)
-set_constant!("neg_float",      MuTypes.Float)
-set_constant!("floor",          MuTypes.Int)
-set_constant!("parse_int",      MuTypes.Int)
-set_constant!("parse_float",    MuTypes.Float)
+set_constant!("neq_int_int",    [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("neq_float_float",[MuTypes.Float, MuTypes.Float], MuTypes.Bool)
 
-# `print` always return 0.
-set_constant!("print",          MuTypes.Int)
-set_constant!("readline",       MuTypes.String)
-set_constant!("length",         MuTypes.Int)
-# `set` always return 0.
-set_constant!("set",            MuTypes.Int)
+set_constant!("lt_int_int",     [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("lt_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Bool)
 
-function arrget_tfunc(argtypes::Vector{DataType})
+set_constant!("gt_int_int",     [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("gt_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Bool)
+
+
+set_constant!("le_int_int",     [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("le_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Bool)
+
+set_constant!("ge_int_int",     [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("ge_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Bool)
+
+set_constant!("and_int_int",    [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("and_float_float",[MuTypes.Float, MuTypes.Float], MuTypes.Bool)
+
+set_constant!("or_int_int",     [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
+set_constant!("or_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Bool)
+
+set_constant!("neg_int",        [MuTypes.Int], MuTypes.Int)
+set_constant!("neg_float",      [MuTypes.Float], MuTypes.Float)
+
+set_constant!("floor",          [MuTypes.Float], MuTypes.Int)
+set_constant!("parse_int",      [MuTypes.String], MuTypes.Int)
+set_constant!("parse_float",    [MuTypes.String], MuTypes.Float)
+set_constant!("print",          [MuTypes.String], MuTypes.Int)
+set_constant!("readline",       [], MuTypes.String)
+set_constant!("length",         [MuTypes.AbstractArray], MuTypes.Int)
+
+TFUNCS["get"] = function (argtypes::Vector{DataType})
     if isempty(argtypes[1].parameters) 
         @warn "Try to get from $(argtypes[1])"
         return MuTypes.Bottom
@@ -71,13 +60,33 @@ function arrget_tfunc(argtypes::Vector{DataType})
     return argtypes[1].parameters[1]
 end
 
-TFUNCS["get"] = arrget_tfunc
+
+# Set always return 0 in Mu.
+TFUNCS["set"] = function (argtypes::AbstractArray)
+    arrtype = argtypes[1]
+    idxtype = argtypes[2]
+    valtype = argtypes[3]
+
+    if !(arrtype <: MuTypes.AbstractArray)
+        @warn "Try to set value to $(arrtype). Expecting an array type."
+        return MuTypes.Bottom
+    end
+
+    if !(idxtype <: MuTypes.Int)
+        @warn "Try to set value to $(arrtype) with index $(idxtype). Expecting an integer index."
+        return MuTypes.Bottom
+    end
+
+    return MuTypes.Int
+end
+
+
 
 function get_tfuncs(name::String)::Function
     if haskey(TFUNCS, name)
         return TFUNCS[name]
     else
-        throw(ArgumentError("tfunc of $name is not defined. Available tfuncs are $(keys(TFUNCS))"))
+        Base.throw(ArgumentError("tfunc of $name is not defined. Available tfuncs are $(keys(TFUNCS))"))
     end
 end
 
