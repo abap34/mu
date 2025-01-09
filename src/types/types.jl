@@ -94,8 +94,8 @@ issubtype(::Type{T}, ::Type{U}) where {T<:MuType,U<:Union} = any(issubtype(u, T)
 
 issubtype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(supertype(S), T) || S == T
 
-⊓(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(S, T) ? S : issubtype(T, S) ? T : Union{S,T}
-
+jointype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(S, T) ? T : issubtype(T, S) ? S : Union{S,T}
+meettype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(S, T) ? S : issubtype(T, S) ? T : Bottom
 
 Base.:(==)(::Type{U1}, ::Type{U2}) where {U1<:Union,U2<:Union} = Set(expand_types(U1)) == Set(expand_types(U2))
 
@@ -130,7 +130,11 @@ function _str_to_type(name::Base.String)
 end
 
 function shorten_str(t::DataType)
-    if t == Any
+    if t <: Array
+        return "Array{" * shorten_str(t.parameters[1]) * ", " * string(t.parameters[2]) * "}"
+    elseif t <: Union
+        return "Union{" * join([shorten_str(x) for x in expand_types(t)], ", ") * "}"
+    elseif t == Any
         return "Any"
     elseif t == Number
         return "Number"
@@ -150,10 +154,7 @@ function shorten_str(t::DataType)
         return "AbstractArray"
     elseif t == Bottom
         return "Bottom"
-    elseif t isa Array
-        return "Array{" * shorten_str(t.elemtype) * ", " * string(t.dim) * "}"
-    elseif t isa Union
-        return "Union{" * join([shorten_str(x) for x in expand_types(t)], ", ") * "}"
+    
     else
         return string(t)
     end

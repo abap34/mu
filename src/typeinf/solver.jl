@@ -39,7 +39,7 @@ function ⊓(state1::AbstractState, state2::AbstractState)
     new_state = copy(state1)
     for (ident, value) in state2.state
         if haskey(new_state, ident)
-            new_state.state[ident] = MuTypes.:⊓(new_state.state[ident], value)
+            new_state.state[ident] = MuTypes.jointype(new_state.state[ident], value)
         else
             new_state.state[ident] = value
         end
