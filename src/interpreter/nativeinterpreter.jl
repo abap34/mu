@@ -155,7 +155,7 @@ function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vect
 
     argvalues = [execute_expr!(interp, arg) for arg in args]
     argtypes = [MuTypes.typeof(arg) for arg in argvalues]
-    method_id = first(lookup(interp.methodtable, name, argtypes, exact_match=true))
+    method_id = first(lookup(interp.methodtable, name, argtypes, matching=:exact))
     mi = mi_by_id(interp.methodtable, method_id)
 
     push!(interp.callstack, Frame(method_id, 1, Env()))
@@ -228,7 +228,7 @@ function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
 
     setup_labels!(interp)
     
-    main_id = first(lookup(interp.methodtable, MuAST.Ident("main"), DataType[], exact_match=true))
+    main_id = first(lookup(interp.methodtable, MuAST.Ident("main"), DataType[], matching=:exact))
 
     push!(interp.callstack, Frame(main_id, 1, Env()))
 

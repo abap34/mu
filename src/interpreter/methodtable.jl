@@ -1,25 +1,22 @@
 using ..MuTypes
 
+function _is_argtype(tarr::AbstractArray)
+    for t in tarr
+        if !(t <: MuTypes.MuType)
+            return false
+        end
+    end
+
+    return true
+end
+
+
 # Exists an `i` s.t t1[i] <: t2[i]
 # and no `j` s.t t2[j] <: t1[j], t1 is more specific than t2.
 # check no `j` s.t t2[j] <: t1[j]
 function specificity(t1::AbstractArray{DataType}, t2::AbstractArray{DataType})
-    for (t1, t2) in zip(t1, t2)
-        if !(t1 <: MuTypes.MuType)
-            throw(ArgumentError("All signature must be MuTypes. Got $t1"))
-        end
-
-        if !(t2 <: MuTypes.MuType)
-            throw(ArgumentError("All signature must be MuTypes. Got $t2"))
-        end
-    end
-
-
-    if length(t1) != length(t2)
-        throw(ArgumentError("t1 and t2 must have the same length. Got $t1 (length: $(length(t1))) and $t2 (length: $(length(t2)))"))
-    end
-
-
+    (length(t1) == length(t2)) || throw(ArgumentError("Length of t1 and t2 must be the same. Got $(length(t1)) and $(length(t2))"))
+    (_is_argtype(t1) && _is_argtype(t2)) || throw(ArgumentError("All arguments must be MuTypes. Got $t1 and $t2"))
 
     for j in eachindex(t1)
         if MuTypes.issubtype(t2[j], t1[j])
@@ -40,19 +37,10 @@ end
 
 # Is is allowed to call a function with the given signature with the given actual arguments?
 function ismatch(signature::AbstractArray, actual_args::AbstractArray)
-    if length(signature) != length(actual_args)
-        return false
-    end
-
-    for (sig, actual) in zip(signature, actual_args)
-        if !(sig <: MuTypes.MuType)
-            throw(ArgumentError("All signature must be MuTypes. Got $signature"))
-        end
-
-        if !(actual <: MuTypes.MuType)
-            throw(ArgumentError("All actual_args must be MuTypes. Got $signature"))
-        end
-    end
+    (_is_argtype(signature) && _is_argtype(actual_args)) || throw(ArgumentError("All arguments must be MuTypes. Got $signature and $actual_args"))
+    
+    
+    (length(signature) != length(actual_args)) && return false
 
     for (sig, actual) in zip(signature, actual_args)
         if !MuTypes.issubtype(actual, sig)
@@ -62,6 +50,28 @@ function ismatch(signature::AbstractArray, actual_args::AbstractArray)
 
     return true
 end
+
+
+# Is there a possibility to call a `signature` with subtypes of `actual_args`?
+# e.g. ispossible([Int, Int], [Real, Real]) => true. 
+#      ispossible([Int, Int], [Real, Bool]) => false. 
+#      ispossible([Int, Int], [Union{Int, Float}, Union{Int, Bool}]) => true.
+function ispossible(signature::AbstractArray, actual_args::AbstractArray)
+    (_is_argtype(signature) && _is_argtype(actual_args)) || throw(ArgumentError("All arguments must be MuTypes. Got $signature and $actual_args"))
+
+    (length(signature) != length(actual_args)) && return false
+
+
+    for (sig, actual) in zip(signature, actual_args)
+        meet = MuTypes.meettype(sig, actual)
+        if meet == MuTypes.Bottom
+            return false
+        end
+    end
+
+    return true
+end
+
 
 # Wrapper for a dictionary of method tables
 struct MethodTable
@@ -163,10 +173,18 @@ function mis_by_name(methodtable::MethodTable, name::MuAST.Ident)::Vector{MuIR.M
 end
 
 
-# Lookup a method in the method table by name and signature and return the method id
-function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::AbstractArray; exact_match::Bool=false)::Vector{Int}
-    @assert all(sig -> sig <: MuTypes.MuType, expect_signature) "All arguments must be MuType. Got $expect_signature"
+# Lookup a method in the method table by name and signature and return the Vector of MethodInstance ids.
+# If `matching` is `:exact`, return the first method which matches the signature.
+# If `matching` is `:possible`, return all methods which can be called with the given signature.
+# If `matching` is `:all`, return all methods which match the signature.
+function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::AbstractArray; matching::Symbol=:exact)::Vector{Int}
+    (matching in (:exact, :possible, :all)) || throw(ArgumentError("Matching must be one of :exact, :possible, :all. Got $matching"))
+    _is_argtype(expect_signature) || throw(ArgumentError("All arguments must be MuTypes. Got $expect_signature"))
 
+    matcher = (matching == :exact || matching == :all) ? ismatch : ispossible
+    exact_match = matching == :exact
+
+    
     if !haskey(methodtable.table, name)
         throw(ArgumentError("Method $name not found in method table. Available methods: $(method_names(methodtable))"))
     end
@@ -183,7 +201,7 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
 
     # Find the first method which matches the signature
     for (i, mi) in enumerate(candidates)
-        if ismatch(mi.signature, expect_signature)
+        if matcher(mi.signature, expect_signature)
             # Check next candidate is same specificity and matches. 
             # If so, throw and `AmbiguousMethodError`
             if exact_match
