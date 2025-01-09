@@ -22,9 +22,6 @@ function InferenceFrame(init::T, n::Int, mi::MuIR.MethodInstance, ∇::Function)
     InferenceFrame{T}([init for i in 1:n], [init for i in 1:n], mi, ∇)
 end
 
-function return_type(frame::InferenceFrame{T})::T where {T}
-    return frame.outputs[end]
-end
 
 function preview(state::InferenceFrame{T}; highlight::Int=-1) where {T}
     if isempty(state.inputs)
@@ -182,10 +179,70 @@ function infer(mi::MuIR.MethodInstance; argtypes::AbstractArray, mt::MuInterpret
         initstate=initstate,
     )
 
-    return lookup(return_type(infered_state), MuAST.RETURN_IDENT)
     return inferedframe
 end
 
+
+# Interface for type inference
+function return_type(mi::MuIR.MethodInstance; argtypes::AbstractArray, mt::MuInterpreter.MethodTable)
+    infered_state = infer(mi, argtypes=argtypes, mt=mt)
+    return lookup(infered_state.outputs[end], MuAST.RETURN_IDENT)
+end
+
+function show_typing(mi::MuIR.MethodInstance, frame::InferenceFrame; io::IO=stdout)
+    ci = mi.ci
+    n = length(ci)
+
+    if n != length(frame.inputs) || n != length(frame.outputs)
+        throw(ArgumentError("InferenceFrame length mismatch"))
+    end
+
+    if length(ci.instrs) == 0
+        println(io, "Empty IR")
+        return
+    end
+
+    instrs = ci.instrs
+
+    idx_width = max(ndigits(length(instrs)), 3)
+    irtype_width = max(maximum(x -> length(string(x.irtype)), instr for instr in instrs), 10)
+
+    println(io, "| ", lpad("idx", idx_width), " | ", lpad("irtype", irtype_width), " | instr")
+    println(io, "| ", "-"^idx_width, " | ", "-"^irtype_width, " | ", "-"^40)
+
+    for (idx, instr) in enumerate(instrs)
+        print(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.irtype), irtype_width), " | ", instr)
+
+        if instr.irtype == MuIR.ASSIGN
+            assign_var = MuIR.get_varname(instr)
+
+            if assign_var.name == "_"
+                println(io, " ")
+                continue
+            end
+
+            inferred_type = lookup(frame.outputs[idx], assign_var)
+
+
+            if inferred_type == MuTypes.Bottom
+                color = :red
+            elseif inferred_type == MuTypes.Any
+                color = :red
+            else
+                if MuTypes.is_concrete(inferred_type)
+                    color = :blue
+                else
+                    color = :magenta
+                end
+            end
+
+            printstyled(io, "::", MuTypes.shorten_str(inferred_type), "\n", bold=true, color=color)
+        else
+            println(io, " ")
+        end 
+    end
+
+    printstyled(io, "=> ", MuTypes.shorten_str(lookup(frame.outputs[end], MuAST.RETURN_IDENT)), "\n", bold=true, color=:green)
 end
 
 
