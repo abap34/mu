@@ -26,11 +26,21 @@ macro builtin(ex)
     end |> esc
 end
 
-function set_constant!(name::String, type::DataType)
-    @assert type <: MuType
+function set_constant!(name::String, input::AbstractArray, output::DataType)
+    @assert all(x -> x isa DataType, input)
+    @assert output <: MuTypes.MuType
     @assert !haskey(TFUNCS, name)
     @assert haskey(BUILTINS, name)
-    TFUNCS[name] = (_...) -> type
+    TFUNCS[name] = function (argtypes::AbstractArray)
+        for (i, (argtype, expected)) in enumerate(zip(argtypes, input))
+            if !(MuTypes.issubtype(argtype, expected))
+                @warn "Argument $i of $name expects subtype of $expected. Got $argtype"
+                return MuTypes.Bottom
+            end
+        end
+
+        return output
+    end
 end
 
 include("impl.jl")
