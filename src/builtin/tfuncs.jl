@@ -53,7 +53,7 @@ set_constant!("readline",       [], MuTypes.String)
 set_constant!("length",         [MuTypes.AbstractArray], MuTypes.Int)
 
 TFUNCS["get"] = function (argtypes::Vector{DataType})
-    if isempty(argtypes[1].parameters) 
+    if !(MuTypes.issubtype(argtypes[1], MuTypes.AbstractArray))
         @warn "Try to get from $(argtypes[1])"
         return MuTypes.Bottom
     end
@@ -67,7 +67,7 @@ TFUNCS["set"] = function (argtypes::AbstractArray)
     idxtype = argtypes[2]
     valtype = argtypes[3]
 
-    if !(arrtype <: MuTypes.AbstractArray)
+    if !(MuTypes.issubtype(arrtype, MuTypes.AbstractArray))
         @warn "Try to set value to $(arrtype). Expecting an array type."
         return MuTypes.Bottom
     end
@@ -115,6 +115,7 @@ function get_tfuncs(name::String)::Function
         Base.throw(ArgumentError("tfunc of $name is not defined. Available tfuncs are $(keys(TFUNCS))"))
     end
 end
+
 
 
 
