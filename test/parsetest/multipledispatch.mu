@@ -2,7 +2,7 @@ function double(x::Number){
     return 2 * x
 }
 
-function double(x::Vector{Int, 1}){
+function double(x::Array{Int, 1}){
     n = length(x)
     i = 1
     while (i <= n){
