@@ -7,7 +7,7 @@ using PEG
 
 
 @rule str = (
-    "\"" & r"[^\"]"[*] & "\""
+    "\"" & r"[^\"]"[*] & r"\""p
 ) |> build_str
 
 
