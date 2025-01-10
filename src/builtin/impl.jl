@@ -64,3 +64,7 @@
 @builtin length(args::AbstractArray, env::Dict{String,Any}) = Base.length(args[1])
 @builtin get(args::AbstractArray, env::Dict{String,Any}) = args[1][args[2]]
 @builtin set(args::AbstractArray, env::Dict{String,Any}) = (args[1][args[2]] = args[3]; return 0)
+
+
+@builtin expanddims(args::AbstractArray, env::Dict{String,Any}) = Base.reshape(arr, size(arr)..., 1)
+@builtin sum(args::AbstractArray, env::Dict{String,Any}) = Base.sum(args[1], dims=args[2])

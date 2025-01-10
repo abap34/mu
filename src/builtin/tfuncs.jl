@@ -80,6 +80,32 @@ TFUNCS["set"] = function (argtypes::AbstractArray)
     return MuTypes.Int
 end
 
+TFUNCS["expanddims"] = function (argtypes::AbstractArray)
+    if !(MuTypes.issubtype(argtypes[1], MuTypes.AbstractArray))
+        @warn "Try to expanddims on $(argtypes[1]). Expecting an array type."
+        return MuTypes.Bottom
+    end
+
+    eltype = argtypes[1].parameters[1]
+    dim = argtypes[1].parameters[2] 
+
+    return MuTypes.Array{eltype, dim + 1}
+end
+
+TFUNCS["sum"] = function (argtypes::AbstractArray)
+    if !(MuTypes.issubtype(argtypes[1], MuTypes.AbstractArray))
+        @warn "Try to sum on $(argtypes[1]). Expecting an array type."
+        return MuTypes.Bottom
+    end
+
+    eltype = argtypes[1].parameters[1]
+    dim = argtypes[1].parameters[2]
+
+    (dim == 1) && return eltype
+
+    return MuTypes.Array{eltype, dim - 1}
+    
+end
 
 
 function get_tfuncs(name::String)::Function
