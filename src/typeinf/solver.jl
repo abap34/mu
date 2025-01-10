@@ -35,7 +35,7 @@ function ∇(new_output, current_output)
     return new_output
 end
 
-function ⊓(state1::AbstractState, state2::AbstractState)
+function ⊔(state1::AbstractState, state2::AbstractState)
     new_state = copy(state1)
     for (ident, value) in state2.state
         if haskey(new_state, ident)
@@ -61,7 +61,7 @@ function abstract_interpret(
     while true
         changed = false
         for i in 1:n
-            new_input::AbstractState = reduce(⊓, frame.outputs[j] for j in pred[i]; init=copy(initstate))
+            new_input::AbstractState = reduce(⊔, frame.outputs[j] for j in pred[i]; init=copy(initstate))
             try
                 new_output::AbstractState = abstract_semantics(ci[i])(new_input)
                 changed = update!(frame, i, new_input, new_output)
