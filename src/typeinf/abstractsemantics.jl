@@ -1,28 +1,19 @@
-function _abstract_builtincall(f, arg_abstractvalues)
+function _abstract_builtincall(f, arg_abstractvalues)::DataType
     return MuBuiltins.get_tfuncs(f.name)(arg_abstractvalues)
 end
-function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)
+function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)::DataType
     mt = astate.mt
 
-    macthed_methods = MuInterpreter.lookup(
-        mt,
-        f,
-        arg_abstractvalues,
-        matching=:possible
+    macthed_methods = MuInterpreter.lookup(mt, f, arg_abstractvalues, matching=:possible)
+    _infer(methodid::Int) = return_type(MuInterpreter.mi_by_id(mt, methodid), argtypes=arg_abstractvalues, mt=mt)
+
+    return reduce(
+        MuTypes.meettype,
+        (_infer(methodid) for methodid in macthed_methods),
     )
-
-    joined_type = MuTypes.Bottom
-
-    for method_id in macthed_methods
-        mi = MuInterpreter.mi_by_id(mt, method_id)
-        mi_return_type = return_type(mi, argtypes=arg_abstractvalues, mt=mt)
-        joined_type = MuTypes.jointype(joined_type, mi_return_type)
-    end
-
-    return joined_type
 end
 
-function _abstract_execute(expr::MuAST.Ident, astate::AbstractState)
+function _abstract_execute(expr::MuAST.Ident, astate::AbstractState)::DataType
     if haskey(astate, expr)
         return lookup(astate, expr)
     else
@@ -30,7 +21,7 @@ function _abstract_execute(expr::MuAST.Ident, astate::AbstractState)
     end
 end
 
-function _abstract_execute(expr::MuAST.Literal, astate::AbstractState)
+function _abstract_execute(expr::MuAST.Literal, astate::AbstractState)::DataType
     return MuTypes.typeof(expr)
 end
 
@@ -60,7 +51,7 @@ function _abstract_execute(expr::MuAST.Expr, astate::AbstractState)
 end
 
 
-function abstract_semantics(instr::MuIR.Instr)
+function abstract_semantics(instr::MuIR.Instr)::Function
     if instr.irtype == MuIR.ASSIGN
         lhs, rhs = instr.expr.args
         return function (astate)
