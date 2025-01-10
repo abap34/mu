@@ -16,7 +16,8 @@ end
 const TESTS = Dict(
     "parse" => "parse.jl",
     "types" => "types.jl",
-    "interpreter" => "interpreter.jl"
+    "interpreter" => "interpreter.jl",
+    "typeinf" => "typeinf.jl",
 )
 
 function main(args)
