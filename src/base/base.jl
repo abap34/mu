@@ -162,17 +162,16 @@ function set(arr::AbstractArray, idx::Int, value::Any){
 }
 """
 
+const _BASE_AST = MuCore.parse(BASE)
+
+const _BASE_LOADED_MT = MuCore.MuInterpreter.MethodTable()
+
+for mi in MuCore.lowering(_BASE_AST)
+    MuCore.MuInterpreter.add_method!(_BASE_LOADED_MT, mi)
+end
 
 function load_base()::MuCore.MuInterpreter.MethodTable
-    methodtable = MuCore.MuInterpreter.MethodTable()
-
-    ast = MuCore.parse(BASE)
-
-    for mi in MuCore.lowering(ast)
-        MuCore.MuInterpreter.add_method!(methodtable, mi)
-    end
-
-    return methodtable
+    return copy(_BASE_LOADED_MT)
 end
 
 

@@ -77,9 +77,13 @@ end
 struct MethodTable
     # Function name -> Vector of MethodInstance
     table::Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}
-    function MethodTable()
-        new(Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}())
+    function MethodTable(;table::Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}=Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}())
+        new(table)
     end
+end
+
+function Base.copy(methodtable::MethodTable)
+    return MethodTable(table=copy(methodtable.table))
 end
 
 function methodnames(methodtable::MethodTable)
