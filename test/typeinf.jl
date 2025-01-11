@@ -757,12 +757,15 @@ function _infer_return_type(src::String)
 end
 
 @testset "Safety of type inference" begin
-    for (name, testcases) in TESTCASES
+    for (name, testcases) in SIMPLE_TESTCASES
         @testset "Test $name" begin
-            for (src, expected) in testcases
-                safe = MuTypes.issubtype(_infer_return_type(src), expected)
+            for (src, _) in testcases
+                inferred = _infer_return_type(src)
+                actual = _return_value_type(src)
+
+                safe = MuTypes.issubtype(_return_value_type(src), _infer_return_type(src))
                 onfail(@test safe) do
-                    @error "Got dangerous type inference! \n src: $src \n  expected: $expected \n  got: $(_infer_return_type(src))"
+                    @error "Got dangerous type inference! \n src: $src \n  inferred: $inferred \n  actual: $actual"
                 end
             end
         end
