@@ -142,7 +142,7 @@ function sub(x::Float){
 }
 
 function floor(x::Float){
-    return @floor(x)    
+    return @floor_float(x)    
 }
 
 function print(s::Any){
@@ -150,16 +150,30 @@ function print(s::Any){
 }
 
 function length(arr::AbstractArray){
-    return @length(arr)    
+    return @length_arr(arr)
+}
+
+function length(S::String){
+    return @length_str(S)
 }
 
 function get(arr::AbstractArray, idx::Int){
-    return @get(arr, idx)    
+    return @get_arr(arr, idx)    
+}
+
+function get(S::String, idx::Int){
+    return @get_str(arr, idx)    
 }
 
 function set(arr::AbstractArray, idx::Int, value::Any){
-    return @set(arr, idx, value)
+    return @set_arr(arr, idx, value)
 }
+
+function mul(s1::String, s2::String){
+    return @mul_str_str(s1, s2)    
+}
+
+
 """
 
 const _BASE_AST = MuCore.parse(BASE)
