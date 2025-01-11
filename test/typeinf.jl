@@ -148,7 +148,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @expanddims([1, 2, 3])
+            return @expanddims_arr([1, 2, 3])
         }
         """,
         MuTypes.Array{MuTypes.Int,2},
@@ -156,7 +156,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @sum([1, 2, 3], 1)
+            return @sum_arr([1, 2, 3], 1)
         }
         """,
         MuTypes.Int,
@@ -164,7 +164,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @sum([1.0, 2.0, 3.0], 1)
+            return @sum_arr([1.0, 2.0, 3.0], 1)
         }
         """,
         MuTypes.Float,
@@ -172,7 +172,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @sum([1, 2, 3; 4, 5, 6], 2)
+            return @sum_arr([1, 2, 3; 4, 5, 6], 2)
         }
         """,
         MuTypes.Array{MuTypes.Int,1},
@@ -180,7 +180,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @sum([1.0, 2.0, 3.0; 4.0, 5.0, 6.0], 2)
+            return @sum_arr([1.0, 2.0, 3.0; 4.0, 5.0, 6.0], 2)
         }
         """,
         MuTypes.Array{MuTypes.Float,1},
@@ -188,7 +188,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @expanddims([1, 2, 3])
+            return @expanddims_arr([1, 2, 3])
         }
         """,
         MuTypes.Array{MuTypes.Int,2},
@@ -196,7 +196,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @get([1, 2, 3], 1)
+            return @get_arr([1, 2, 3], 1)
         }
         """,
         MuTypes.Int,
@@ -204,7 +204,7 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @set([1.2, 2.3, 3.4], 1, 1)
+            return @set_arr([1.2, 2.3, 3.4], 1, 1)
         }
         """,
         MuTypes.Int,
@@ -720,8 +720,109 @@ WHILE_LOOP = [
     ),
 ]
 
+MULTI_FUNCSTOPN = [
+    (
+        """
+        function g(x::Int){
+            return x
+        }
 
-TESTCASES = Dict(
+        function f(){
+            return g(1)
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function h(x::Float){
+            return x
+        }
+
+        function g(x::Float){
+            return h(x)
+        }
+
+        function f(){
+            return g(1.0)
+        }
+        """,
+        MuTypes.Float,
+    ),
+]
+
+ABSTRACT_FORMALARGS = [
+    (
+        """
+        function g(x::Number){
+            return x
+        }
+
+        function f(){
+            return g(1)
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function h(x::Number){
+            return x
+        }
+
+        function g(x::Number){
+            return h(x)
+        }
+
+        function f(){
+            return g(1.0)
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function h(x::Number){
+            return x
+        }
+
+        function g(x::Number){
+            return h(x)
+        }
+
+        function f(){
+            if (true){
+                return h(1.0)
+            } else {
+                return g(1)
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Int,MuTypes.Float},
+    ),
+    (
+        """
+        function h(x::Number){
+            return x
+        }
+
+        function g(x::Number){
+            return h(x)
+        }
+
+        function f(){
+            if (true){
+                return h(1.0)
+            } else {
+                return g(1.0)
+            }
+        }
+        """,
+        MuTypes.Float,
+    ),
+]
+    
+SIMPLE_TESTCASES = Dict(
     "Simple literal" => SIMPLE_LITERAL,
     "Linear calculation" => SIMPLE_ONE_FUNC,
     "Some calculation" => SIMPLE_SOME_FUNC,
@@ -731,18 +832,8 @@ TESTCASES = Dict(
     "If-else nested same type" => IF_ELSE_NESTED_SAME_TYPE,
     "If-else nested different type" => IF_ELSE_NESTED_DIFF_TYPE,
     "While loop" => WHILE_LOOP,
-)
-
-EXACT_EXPECTED = Dict(
-    "Simple literal" => SIMPLE_LITERAL,
-    "Linear calculation" => SIMPLE_ONE_FUNC,
-    "Some calculation" => SIMPLE_SOME_FUNC,
-    "Some expression" => SIMPLE_SOMEEXPR,
-    "If-else same type" => IF_ELSE_SAME_TYPE,
-    "If-else different type" => IF_ELSE_DIFF_TYPE,
-    "If-else nested same type" => IF_ELSE_NESTED_SAME_TYPE,
-    "If-else nested different type" => IF_ELSE_NESTED_DIFF_TYPE,
-    "While loop" => WHILE_LOOP,
+    "Multiple function stop" => MULTI_FUNCSTOPN,
+    "Abstract formal arguments" => ABSTRACT_FORMALARGS,
 )
 
 
@@ -755,6 +846,24 @@ function _infer_return_type(src::String)
 
     return MuTypeInf.return_type(lowerd[end], argtypes=[], mt=mt)
 end
+
+function _return_value_type(src::String)
+    src *= """
+    function main(){
+        return f()
+    }
+    """
+    ast = MuCore.parse(src)
+    lowerd = MuCore.lowering(ast)
+    mt = MuBase.load_base()
+
+    MuCore.MuInterpreter.load!(mt, lowerd)
+
+    interp = MuCore.MuInterpreter.NativeInterpreter(methodtable=mt)
+
+    return MuTypes.typeof(MuCore.MuInterpreter.interpret(lowerd, interp))
+end
+
 
 @testset "Safety of type inference" begin
     for (name, testcases) in SIMPLE_TESTCASES
@@ -773,7 +882,7 @@ end
 end
 
 @testset "Exactness of type inference" begin
-    for (name, testcases) in EXACT_EXPECTED
+    for (name, testcases) in SIMPLE_TESTCASES   
         @testset "Test $name" begin
             for (src, expected) in testcases
                 exact = _infer_return_type(src) == expected
