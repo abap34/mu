@@ -99,6 +99,14 @@ const SUBTYPES = [
     (MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Real}}, MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Real}}),
     (MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Real}}, MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Union{MuTypes.Real,MuTypes.Bool}}}),
 
+    # right side is union type
+    (MuTypes.Int, MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    (MuTypes.Real, MuTypes.Union{MuTypes.Int,MuTypes.Real}),
+    (MuTypes.Real, MuTypes.Union{MuTypes.Int,MuTypes.Real}),
+    (MuTypes.Int, MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    (MuTypes.Float, MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    (MuTypes.Float, MuTypes.Union{MuTypes.Real,MuTypes.Float}),
+
     # Super type case
     (MuTypes.Union{MuTypes.Int,MuTypes.Float}, MuTypes.Number),
     (MuTypes.Union{MuTypes.Int,MuTypes.Float}, MuTypes.Real),
@@ -115,7 +123,7 @@ const SUBTYPES = [
     # Union type with Bottom case
     (MuTypes.Union{MuTypes.Int,MuTypes.Bottom}, MuTypes.Int),
     (MuTypes.Union{MuTypes.Number,MuTypes.Bottom}, MuTypes.Number),
-    (MuTypes.Union{MuTypes.Real,MuTypes.Bottom}, MuTypes.Any),
+    (MuTypes.Union{MuTypes.Real,MuTypes.Bottom}, MuTypes.Any),    
 ]
 
 # !(t1 <: t2) case
@@ -134,7 +142,13 @@ const NOT_SUBTYPES = [
     (MuTypes.Any, MuTypes.Bottom),
     (MuTypes.Number, MuTypes.Bottom),
     (MuTypes.Int, MuTypes.Bottom), (MuTypes.Array{MuTypes.Int,1}, MuTypes.Array{MuTypes.Real,1}),
-    (MuTypes.Array{MuTypes.Float,1}, MuTypes.Array{MuTypes.Real,1})
+    (MuTypes.Array{MuTypes.Float,1}, MuTypes.Array{MuTypes.Real,1}),
+    (MuTypes.Number, MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    (MuTypes.Any, MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    (MuTypes.Any, MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Real}}),
+    (MuTypes.AbstractString, MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    
+
 ]
 
 @testset "Subtype" begin
@@ -235,6 +249,101 @@ const VALID_TYPES_NESTED = [
     end
 
 
+end
+
+# jointype, meettype test
+
+const JOINTYPE_TESTCASES = [
+    ((MuTypes.Int, MuTypes.Float), MuTypes.Union{MuTypes.Int,MuTypes.Float}),
+    ((MuTypes.Int, MuTypes.Int), MuTypes.Int),
+    ((MuTypes.Int, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Int, MuTypes.Number), MuTypes.Number),
+    ((MuTypes.Int, MuTypes.Any), MuTypes.Any),
+    ((MuTypes.Int, MuTypes.Bottom), MuTypes.Int),
+    ((MuTypes.Bottom, MuTypes.Int), MuTypes.Int),
+    ((MuTypes.Bottom, MuTypes.Bottom), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Any), MuTypes.Any),
+    ((MuTypes.Bottom, MuTypes.Number), MuTypes.Number),
+    ((MuTypes.Bottom, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Bottom, MuTypes.Float), MuTypes.Float),
+    ((MuTypes.Bottom, MuTypes.Int), MuTypes.Int),
+    ((MuTypes.Bottom, MuTypes.Float), MuTypes.Float),
+    ((MuTypes.Bottom, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Bottom, MuTypes.Number), MuTypes.Number),
+    ((MuTypes.Bottom, MuTypes.Any), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Bottom), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Number), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Real), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Float), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Int), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Float), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Real), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Number), MuTypes.Any),
+    ((MuTypes.Any, MuTypes.Any), MuTypes.Any),
+    ((MuTypes.Number, MuTypes.Number), MuTypes.Number),
+    ((MuTypes.Number, MuTypes.Real), MuTypes.Number),
+    ((MuTypes.Number, MuTypes.Float), MuTypes.Number),
+    ((MuTypes.Number, MuTypes.Int), MuTypes.Number),
+    ((MuTypes.Real, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Real, MuTypes.Float), MuTypes.Real),
+    ((MuTypes.Real, MuTypes.Int), MuTypes.Real),
+]
+
+const MEETTYPE_TESTCASES = [
+    ((MuTypes.Int, MuTypes.Float), MuTypes.Bottom),
+    ((MuTypes.Int, MuTypes.Int), MuTypes.Int),
+    ((MuTypes.Int, MuTypes.Real), MuTypes.Int),
+    ((MuTypes.Int, MuTypes.Number), MuTypes.Int),
+    ((MuTypes.Int, MuTypes.Any), MuTypes.Int),
+    ((MuTypes.Int, MuTypes.Bottom), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Int), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Bottom), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Any), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Number), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Real), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Float), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Int), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Float), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Real), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Number), MuTypes.Bottom),
+    ((MuTypes.Bottom, MuTypes.Any), MuTypes.Bottom),
+    ((MuTypes.Any, MuTypes.Bottom), MuTypes.Bottom),
+    ((MuTypes.Any, MuTypes.Number), MuTypes.Number),
+    ((MuTypes.Any, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Any, MuTypes.Float), MuTypes.Float),
+    ((MuTypes.Any, MuTypes.Int), MuTypes.Int),
+    ((MuTypes.Any, MuTypes.Float), MuTypes.Float),
+    ((MuTypes.Any, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Any, MuTypes.Number), MuTypes.Number),
+    ((MuTypes.Any, MuTypes.Any), MuTypes.Any),
+    ((MuTypes.Number, MuTypes.Number), MuTypes.Number),
+    ((MuTypes.Number, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Number, MuTypes.Float), MuTypes.Float),
+    ((MuTypes.Number, MuTypes.Int), MuTypes.Int),
+    ((MuTypes.Real, MuTypes.Real), MuTypes.Real),
+    ((MuTypes.Real, MuTypes.Float), MuTypes.Float),
+    ((MuTypes.Real, MuTypes.Int), MuTypes.Int),
+    ((MuTypes.Bool, MuTypes.Bool), MuTypes.Bool),
+    ((MuTypes.String, MuTypes.String), MuTypes.String),
+    ((MuTypes.AbstractString, MuTypes.String), MuTypes.String)
+]
+
+@testset "meettype, jointype" begin
+    @testset "Jointype" begin
+        for ((t1, t2), expected) in JOINTYPE_TESTCASES
+            onfail(@test MuTypes.jointype(t1, t2) == expected) do
+                @error "Failed! `MuTypes.jointype($t1, $t2)` must return $expected. But got $(MuTypes.jointype(t1, t2))."
+            end
+        end
+    end
+
+    @testset "Meettype" begin
+        for ((t1, t2), expected) in MEETTYPE_TESTCASES
+            onfail(@test MuTypes.meettype(t1, t2) == expected) do
+                @error "Failed! `MuTypes.meettype($t1, $t2)` must return $expected. But got $(MuTypes.meettype(t1, t2))."
+            end
+        end
+    end
 end
 
 
