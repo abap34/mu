@@ -13,8 +13,23 @@ end
 
 using .MuParse
 
+
+# ignore line starts with "#""
+function removecomments(src::String)
+    removed = ""
+    for line in split(src, '\n')
+        if !startswith(line, "#")
+            removed *= line
+        end
+    end
+
+    return removed
+end
+
+
 function parse(src::String; rule=MuParse.program)
-    return PEG.parse_whole(rule, src)
+    _parse(src) = PEG.parse_whole(rule, src)
+    return src |> removecomments |> _parse
 end
 
 function parse_file(filename::AbstractString)
