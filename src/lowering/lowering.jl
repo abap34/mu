@@ -193,9 +193,10 @@ function _lowering(expr::MuAST.Expr)
         # label returnlabel       # <-- These labels are added by top level lowering. 
         # return %ret             #     So we don't need to add them here.
 
-        pushfirst!(ci, MuIR.Instr(MuIR.ASSIGN, MuAST.Expr(MuAST.ASSIGN, [MuAST.RETURN_IDENT, expr.args[1]])))
-        push!(ci, MuIR.Instr(MuIR.GOTO, MuAST.Expr(MuAST.GOTO, [RETURN_LABEL_ID])))
-
+        returnbody = expr.args[1]
+        append!(ci, _lowering(MuAST.Expr(MuAST.ASSIGN, [MuAST.RETURN_IDENT, returnbody])))
+        pushgoto!(ci, RETURN_LABEL_ID)
+        
     else
         throw(ArgumentError("Unsupported expression: $expr"))
     end
