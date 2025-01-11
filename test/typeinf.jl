@@ -4,6 +4,8 @@ using mu.MuBase
 using mu.MuCore.MuTypes
 using mu.MuCore.MuTypeInf
 
+# Simple Tests
+
 SIMPLE_LITERAL = [
     (
         """
@@ -895,3 +897,131 @@ end
 end
 
 
+
+
+# Difficult Tests
+function _load_main_mi(src::String)::Tuple{MuCore.MuInterpreter.MethodTable, MuCore.MuIR.MethodInstance}
+    preload_ast = MuCore.parse_file("typeinf/preload.mu")
+    preload_lowerd = MuCore.lowering(preload_ast)
+    mt = MuBase.load_base()
+    MuCore.MuInterpreter.load!(mt, preload_lowerd)
+
+    main_ast = MuCore.parse(src)
+    main_lowerd = MuCore.lowering(main_ast)
+    MuCore.MuInterpreter.load!(mt, main_lowerd)
+
+    main_mi = main_lowerd[end]
+
+    return mt, main_mi
+end
+
+function _run_main(src::String)
+    mt, main_mi = _load_main_mi(src)
+    interp = MuCore.MuInterpreter.NativeInterpreter(methodtable=mt)
+
+    return MuCore.MuInterpreter.interpret([main_mi], interp)
+end
+
+function _safety_test(actual, infered, src::String)
+    safe = MuTypes.issubtype(actual, infered)
+    onfail(@test safe) do
+        @error "Got dangerous type inference! \n src: $src \n  inferred: $infered \n  actual: $actual"
+    end
+end
+
+function _exactness_test(infered, expected, src::String)
+    exact = infered == expected
+    onfail(@test exact) do
+        @error "Got inexact type inference! \n src: $src \n  expected: $expected \n  got: $infered"
+    end
+end
+
+@testset "Difficult tests" begin
+
+TESTCASE1 = """
+function main(){
+    x = 1
+    return double(x)
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE1)
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE1))
+expected = MuTypes.Int
+
+@testset "Test 1" begin
+    _safety_test(actual, infered, TESTCASE1)
+    _exactness_test(infered, expected, TESTCASE1)
+end
+
+
+
+
+TESTCASE2 = """
+function main(){
+    x = 1.0
+    return double(x)
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE2)
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE2))
+expected = MuTypes.Float
+
+@testset "Test 2" begin
+    _safety_test(actual, infered, TESTCASE2)
+    _exactness_test(infered, expected, TESTCASE2)
+end
+
+
+
+TESTCASE3 = """
+function main(){
+    x = [1, 2, 3; 4, 5, 6]
+    return double(x)    
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE3)
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE3))
+expected = MuTypes.Array{MuTypes.Int,2}
+
+@testset "Test 3" begin
+    _safety_test(actual, infered, TESTCASE3)
+    _exactness_test(infered, expected, TESTCASE3)
+end
+
+
+
+TESTCASE4 = """
+function main(){
+    if (true) {
+        x = [1, 2, 3]
+    } else {
+        x = 2
+    }   
+    
+    return double(x)
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE4)
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE4))
+expected = MuTypes.Union{MuTypes.Array{MuTypes.Int,1},MuTypes.Int}
+
+
+@testset "Test 4" begin
+    _safety_test(actual, infered, TESTCASE4)
+    _exactness_test(infered, expected, TESTCASE4)
+end
+
+
+end
