@@ -173,7 +173,17 @@ end
 
 
 function call_builtin!(interp::NativeInterpreter, name::MuAST.Ident, args::Vector{<:Any})
-    MuBuiltins.get_builtin(name.name)(args, currentframe(interp).env.bindings)
+    try
+        MuBuiltins.get_builtin(name.name)(args, currentframe(interp).env.bindings)
+    catch e
+        @error """
+        Failed to call builtin function: $(name.name)
+        Arguments: $(args)
+        Environment: $(currentframe(interp).env)
+        """
+        
+        rethrow(e)
+    end
 end
 
 
