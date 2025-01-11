@@ -85,7 +85,7 @@ end
 @builtin length_arr(args::AbstractArray, env::Dict{String,Any}) = Base.length(args[1])
 @builtin get_arr(args::AbstractArray, env::Dict{String,Any}) = args[1][args[2]]
 @builtin set_arr(args::AbstractArray, env::Dict{String,Any}) = (args[1][args[2]] = args[3]; return 0)
-@builtin similar_arr(args::AbstractArray, env::Dict{String,Any}) = Base.similar(args[1], args[2])
+@builtin similar_arr(args::AbstractArray, env::Dict{String,Any}) = Base.similar(args[1])
 @builtin expanddims_arr(args::AbstractArray, env::Dict{String,Any}) = Base.reshape(args[1], Base.size(args[1])..., 1)
 @builtin sum_arr(args::AbstractArray, env::Dict{String,Any}) = mu_sum(args[1], args[2])
 @builtin eachindex_arr(args::AbstractArray, env::Dict{String,Any}) = Base.eachindex(args[1]) |> Base.collect |> Base.Array
