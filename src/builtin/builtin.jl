@@ -35,7 +35,6 @@ function set_constant!(name::String, input::AbstractArray, output::DataType)
         for (i, (argtype, expected)) in enumerate(zip(argtypes, input))
             if !(MuTypes.issubtype(argtype, expected))
                 @warn "Argument $i of $name expects subtype of $expected. Got $argtype"
-                return MuTypes.Bottom
             end
         end
 
