@@ -90,12 +90,27 @@ issubtype(::Type{<:Union}, ::Type{Any}) = true
 
 issubtype(::Type{U1}, ::Type{U2}) where {U1<:Union,U2<:Union} = all(issubtype(u, U2) for u in expand_types(U1))
 issubtype(::Type{U}, ::Type{T}) where {T<:MuType,U<:Union} = all(issubtype(u, T) for u in expand_types(U))
-issubtype(::Type{T}, ::Type{U}) where {T<:MuType,U<:Union} = any(issubtype(u, T) for u in expand_types(U))
+issubtype(::Type{T}, ::Type{U}) where {T<:MuType,U<:Union} = any(issubtype(T, u) for u in expand_types(U))
 
 issubtype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(supertype(S), T) || S == T
 
 jointype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(S, T) ? T : issubtype(T, S) ? S : Union{S,T}
-meettype(::Type{S}, ::Type{T}) where {S<:MuType,T<:MuType} = issubtype(S, T) ? S : issubtype(T, S) ? T : Bottom
+
+function meettype(::Type{T}, ::Type{U}) where {T<:MuType,U<:MuType}
+    if issubtype(T, U)
+        return T
+    elseif issubtype(U, T)
+        return U
+    elseif isunion(T) 
+        return reduce(jointype, (meettype(t, U) for t in expand_types(T)))
+    elseif isunion(U)
+        return meettype(U, T)
+    else
+        return Bottom
+    end
+end
+
+
 
 Base.:(==)(::Type{U1}, ::Type{U2}) where {U1<:Union,U2<:Union} = Set(expand_types(U1)) == Set(expand_types(U2))
 
