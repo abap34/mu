@@ -173,6 +173,14 @@ function mul(s1::String, s2::String){
     return @mul_str_str(s1, s2)    
 }
 
+function similar(arr::AbstractArray){
+    return @similar_arr(arr)
+}
+
+function eachindex(arr::AbstractArray){
+    return @eachindex_arr(arr)
+}
+
 
 """
 
