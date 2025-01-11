@@ -31,7 +31,7 @@ function pushgoto!(ci::MuIR.CodeInfo, label::Int)
 end
 
 function pushgotoifnot!(ci::MuIR.CodeInfo, label::Int, cond::MuAST.SyntaxNode)
-    push!(ci, MuIR.Instr(MuIR.GOTOIFNOT, MuAST.Expr(MuAST.GOTOIFNOT, [label, cond])))
+    push!(ci, MuIR.Instr(MuIR.GOTOIFNOT, MuAST.Expr(MuAST.GOTOIFNOT, Any[label, cond])))
 end
 
 # Direct embedding in arguments
