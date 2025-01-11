@@ -1,16 +1,28 @@
 function _abstract_builtincall(f, arg_abstractvalues)::DataType
     return MuBuiltins.get_tfuncs(f.name)(arg_abstractvalues)
 end
+
 function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)::DataType
     mt = astate.mt
 
     macthed_methods = MuInterpreter.lookup(mt, f, arg_abstractvalues, matching=:possible)
-    _infer(methodid::Int) = return_type(MuInterpreter.mi_by_id(mt, methodid), argtypes=arg_abstractvalues, mt=mt)
 
-    return reduce(
-        MuTypes.meettype,
-        (_infer(methodid) for methodid in macthed_methods),
-    )
+    inferred = MuTypes.Bottom
+
+    for methodid in macthed_methods
+        mi = MuInterpreter.mi_by_id(mt, methodid)
+        sig = mi.signature
+        
+        _inferred = return_type(
+            mi,
+            argtypes=MuTypes.meettype.(sig, arg_abstractvalues),
+            mt=mt
+        )
+
+        inferred = MuTypes.jointype(inferred, _inferred)
+    end
+
+    return inferred
 end
 
 function _abstract_execute(expr::MuAST.Ident, astate::AbstractState)::DataType
