@@ -2,7 +2,7 @@ using Test
 using ArgParse
 
 onfail(body, _::Test.Pass) = true
-onfail(body, _::Union{Test.Fail, Test.Error}) = body()
+onfail(body, _::Union{Test.Fail,Test.Error}) = body()
 
 
 function load(filename::AbstractString)
@@ -35,15 +35,21 @@ function main(args)
         test = parsed_args["single"]
         if haskey(TESTS, test)
             @info "Run Single Test: $test"
-            include(TESTS[test])
+            @testset verbose = true "$test" begin
+                include(TESTS[test])
+            end
         else
             @error "Unknown test: $test. Available tests: $(keys(TESTS))"
         end
     else
         @info "No test specified. Run all tests."
-        for (test, file) in TESTS
-            @info "Running test: $test"
-            include(file)
+        @testset verbose = true "All Tests" begin
+            for (test, file) in TESTS
+                @info "Running test: $test"
+                @testset "$test" begin
+                    include(file)
+                end
+            end
         end
     end
 end
