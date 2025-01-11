@@ -5,220 +5,744 @@ using mu.MuCore.MuTypes
 using mu.MuCore.MuTypeInf
 
 SIMPLE_LITERAL = [
-(
-"""
-function f(){
-    return 1
-}
-""",
-MuTypes.Int,
-),
-(
-"""
-function f(){
-    return 1.0
-}
-""",
-MuTypes.Float,
-),
-(
-"""
-function f(){
-    return true
-}
-""",
-MuTypes.Bool,
-),
-(
-"""
-function f(){
-    return \"hello\"
-}
-""",
-MuTypes.String,
-),
-(
-"""
-function f(){
-    return [1, 2, 3]
-}
-""",
-MuTypes.Array{MuTypes.Int, 1},
-),
-(
-"""
-function f(){
-    return [1.0, 2.0, 3.0]
-}
-""",
-MuTypes.Array{MuTypes.Float, 1},
-),
-(
-"""
-function f(){
-    return [true, false, true]
-}
-""",
-MuTypes.Array{MuTypes.Bool, 1},
-),
-(
-"""
-function f(){
-    return ["hello", "world"]
-}
-""",
-MuTypes.Array{MuTypes.String, 1},
-),
-(
-"""
-function f(){
-    return [1, 2, 3; 4, 5, 6]
-}
-""",
-MuTypes.Array{MuTypes.Int, 2},
-),
+    (
+        """
+        function f(){
+            return 1
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return 1.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return true
+        }
+        """,
+        MuTypes.Bool,
+    ),
+    (
+        """
+        function f(){
+            return \"hello\"
+        }
+        """,
+        MuTypes.String,
+    ),
+    (
+        """
+        function f(){
+            return [1, 2, 3]
+        }
+        """,
+        MuTypes.Array{MuTypes.Int,1},
+    ),
+    (
+        """
+        function f(){
+            return [1.0, 2.0, 3.0]
+        }
+        """,
+        MuTypes.Array{MuTypes.Float,1},
+    ),
+    (
+        """
+        function f(){
+            return [true, false, true]
+        }
+        """,
+        MuTypes.Array{MuTypes.Bool,1},
+    ),
+    (
+        """
+        function f(){
+            return ["hello", "world"]
+        }
+        """,
+        MuTypes.Array{MuTypes.String,1},
+    ),
+    (
+        """
+        function f(){
+            return [1, 2, 3; 4, 5, 6]
+        }
+        """,
+        MuTypes.Array{MuTypes.Int,2},
+    ),
 ]
 
 
-LINEAR_CALC = [
-(
-"""
-function f(){
-    return 1 + 2
-}
-""",
-MuTypes.Int,
-),
-(
-"""
-function f(){
-    return 1.0 + 2.0
-}
-""",
-MuTypes.Float,
-),
-(
-"""
-function f(){
-    return 1 - 2
-}
-""",
-MuTypes.Int,
-),
-(
-"""
-function f(){
-    return 1.0 - 2.0
-}
-""",
-MuTypes.Float,
-),
-(
-"""
-function f(){
-    return 1 * 2
-}
-""",
-MuTypes.Int,
-),
-(
-"""
-function f(){
-    return 1.0 * 2.0
-}
-""",
-MuTypes.Float,
-),
-(
-"""
-function f(){
-    return 4 / 2
-}
-""",
-MuTypes.Float,
-),
-(
-"""
-function f(){
-    return 1 == 2
-}
-""",
-MuTypes.Bool,
-),
-(
-"""
-function f(){
-    return @expanddims([1, 2, 3])
-}
-""",
-MuTypes.Array{MuTypes.Int, 2},
-),
-(
-"""
-function f(){
-    return @sum([1, 2, 3], 1)
-}
-""",
-MuTypes.Int,
-),
-(
-"""
-function f(){
-    return @sum([1.0, 2.0, 3.0], 1)
-}
-""",
-MuTypes.Float,
-),
-(
-"""
-function f(){
-    return @sum([1, 2, 3; 4, 5, 6], 2)
-}
-""",
-MuTypes.Array{MuTypes.Int, 1},
-),
-(
-"""
-function f(){
-    return @sum([1.0, 2.0, 3.0; 4.0, 5.0, 6.0], 2)
-}
-""",
-MuTypes.Array{MuTypes.Float, 1},
-),
-(
-"""
-function f(){
-    return @expanddims([1, 2, 3])
-}
-""",
-MuTypes.Array{MuTypes.Int, 2},
-),
-(
-"""
-function f(){
-    return @get([1, 2, 3], 1)
-}
-""",
-MuTypes.Int,
-),
-(
-"""
-function f(){
-    return @set([1.2, 2.3, 3.4], 1, 1)
-}
-""",
-MuTypes.Int,
-),
+SIMPLE_ONE_FUNC = [
+    (
+        """
+        function f(){
+            return 1 + 2
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return 1.0 + 2.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return 1 - 2
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return 1.0 - 2.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return 1 * 2
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return 1.0 * 2.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return 4 / 2
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return 1 == 2
+        }
+        """,
+        MuTypes.Bool,
+    ),
+    (
+        """
+        function f(){
+            return @expanddims([1, 2, 3])
+        }
+        """,
+        MuTypes.Array{MuTypes.Int,2},
+    ),
+    (
+        """
+        function f(){
+            return @sum([1, 2, 3], 1)
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return @sum([1.0, 2.0, 3.0], 1)
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return @sum([1, 2, 3; 4, 5, 6], 2)
+        }
+        """,
+        MuTypes.Array{MuTypes.Int,1},
+    ),
+    (
+        """
+        function f(){
+            return @sum([1.0, 2.0, 3.0; 4.0, 5.0, 6.0], 2)
+        }
+        """,
+        MuTypes.Array{MuTypes.Float,1},
+    ),
+    (
+        """
+        function f(){
+            return @expanddims([1, 2, 3])
+        }
+        """,
+        MuTypes.Array{MuTypes.Int,2},
+    ),
+    (
+        """
+        function f(){
+            return @get([1, 2, 3], 1)
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return @set([1.2, 2.3, 3.4], 1, 1)
+        }
+        """,
+        MuTypes.Int,
+    ),
 ]
+
+SIMPLE_SOME_FUNC = [
+    (
+        """
+        function f(){
+            return 1 + 2 * 3
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return 1.0 + 2.0 * 3.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return 1 - 2 * 3
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            return 1.0 - 2.0 * 3.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            return 4 / 2 * 3
+        }
+        """,
+        MuTypes.Float,
+    )
+]
+
+SIMPLE_SOMEEXPR = [
+    (
+        """
+        function f(){
+            y = 1
+            return y + 2
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            y = 1.0
+            return y + 2.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            y = 1
+            return y - 2
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            y = 1.0
+            return y - 2.0
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            y = 4
+            return y / 2
+        }
+        """,
+        MuTypes.Float,
+    )
+]
+
+IF_ELSE_SAME_TYPE = [
+    (
+        """
+        function f(){
+            if (true){
+                return 1
+            } else {
+                return 2
+            }
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return 1.0
+            } else {
+                return 2.0
+            }
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return true
+            } else {
+                return false
+            }
+        }
+        """,
+        MuTypes.Bool,
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return \"hello\"
+            } else {
+                return \"world\"
+            }
+        }
+        """,
+        MuTypes.String,
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return [1, 2, 3]
+            } else {
+                return [4, 5, 6]
+            }
+        }
+        """,
+        MuTypes.Array{MuTypes.Int,1},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return [1, 2, 3; 4, 5, 6]
+            } else {
+                return [7, 8, 9; 10, 11, 12]
+            }
+        }
+        """,
+        MuTypes.Array{MuTypes.Int,2},
+    ),
+]
+
+IF_ELSE_DIFF_TYPE = [
+    (
+        """
+        function f(){
+            if (true){
+                return 1
+            } else {
+                return 1.0
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Int,MuTypes.Float},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return 1.0
+            } else {
+                return 1
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Int,MuTypes.Float},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return true
+            } else {
+                return 1
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Bool,MuTypes.Int},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return \"hello\"
+            } else {
+                return 1
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.String,MuTypes.Int},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return [1, 2, 3]
+            } else {
+                return 1
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Array{MuTypes.Int,1},MuTypes.Int},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                return [1, 2, 3; 4, 5, 6]
+            } else {
+                return 1
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Array{MuTypes.Int,2},MuTypes.Int},
+    ),
+]
+
+IF_ELSE_NESTED_SAME_TYPE = [
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return 1
+                } else {
+                    return 2
+                }
+            } else {
+                return 3
+            }
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return 1.0
+                } else {
+                    return 2.0
+                }
+            } else {
+                return 3.0
+            }
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return true
+                } else {
+                    return false
+                }
+            } else {
+                return true
+            }
+        }
+        """,
+        MuTypes.Bool,
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return \"hello\"
+                } else {
+                    return \"world\"
+                }
+            } else {
+                return \"hello\"
+            }
+        }
+        """,
+        MuTypes.String,
+    )]
+
+
+IF_ELSE_NESTED_DIFF_TYPE = [
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return 1
+                } else {
+                    return 1.0
+                }
+            } else {
+                return 1
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Int,MuTypes.Float},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return 1.0
+                } else {
+                    return 1
+                }
+            } else {
+                return 1.0
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Int,MuTypes.Float},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return true
+                } else {
+                    return 1
+                }
+            } else {
+                return true
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.Bool,MuTypes.Int},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return \"hello\"
+                } else {
+                    return 1
+                }
+            } else {
+                return \"hello\"
+            }
+        }
+        """,
+        MuTypes.Union{MuTypes.String,MuTypes.Int},
+    ),
+    (
+        """
+        function f(){
+            if (true){
+                if (true){
+                    return 1
+                    } else {
+                        return 1.0
+                    }
+                } else {
+                    return "hello"
+                }
+            }
+            """,
+        MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.String}},
+    ),
+    ("""
+       function f(){
+           if (true){
+               if (true){
+                   if (true){
+                       return 1
+                   } else {
+                       return 1.0
+                   }
+               } else {
+                   return "hello"
+               }
+           } else {
+               return [1, 2, 3]
+           }
+       }
+       """,
+        MuTypes.Union{MuTypes.Int,MuTypes.Union{MuTypes.Float,MuTypes.Union{MuTypes.String,MuTypes.Array{MuTypes.Int,1}}}}
+    )
+]
+
+WHILE_LOOP = [
+    (
+        """
+        function f(){
+            x = 0
+            while (x < 10){
+                x = x + 1
+            }
+            return x
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            x = 0.0
+            while (x < 10.0){
+                x = x + 1.0
+            }
+            return x
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            x = 0
+            while (x < 10){
+                x = x + 1
+            }
+            return x
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            x = 0.0
+            while (x < 10.0){
+                x = x + 1.0
+            }
+            return x
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            x = 0
+            while (x < 10){
+                x = x + 1
+            }
+            return x
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            x = 0.0
+            while (x < 10.0){
+                x = x + 1.0
+            }
+            return x
+        }
+        """,
+        MuTypes.Float,
+    ),
+    (
+        """
+        function f(){
+            x = 0
+            while (x < 10){
+                x = x + 1
+            }
+            return x
+        }
+        """,
+        MuTypes.Int,
+    ),
+    (
+        """
+        function f(){
+            x = 0.0
+            while (x < 10.0){
+                x = x + 1.0
+            }
+            return x
+        }
+        """,
+        MuTypes.Float,
+    ),
+]
+
 
 TESTCASES = Dict(
     "Simple literal" => SIMPLE_LITERAL,
-    "Linear calculation" => LINEAR_CALC,
+    "Linear calculation" => SIMPLE_ONE_FUNC,
+    "Some calculation" => SIMPLE_SOME_FUNC,
+    "Some expression" => SIMPLE_SOMEEXPR,
+    "If-else same type" => IF_ELSE_SAME_TYPE,
+    "If-else different type" => IF_ELSE_DIFF_TYPE,
+    "If-else nested same type" => IF_ELSE_NESTED_SAME_TYPE,
+    "If-else nested different type" => IF_ELSE_NESTED_DIFF_TYPE,
+    "While loop" => WHILE_LOOP,
 )
 
 EXACT_EXPECTED = Dict(
     "Simple literal" => SIMPLE_LITERAL,
-    "Linear calculation" => LINEAR_CALC,
+    "Linear calculation" => SIMPLE_ONE_FUNC,
+    "Some calculation" => SIMPLE_SOME_FUNC,
+    "Some expression" => SIMPLE_SOMEEXPR,
+    "If-else same type" => IF_ELSE_SAME_TYPE,
+    "If-else different type" => IF_ELSE_DIFF_TYPE,
+    "If-else nested same type" => IF_ELSE_NESTED_SAME_TYPE,
+    "If-else nested different type" => IF_ELSE_NESTED_DIFF_TYPE,
+    "While loop" => WHILE_LOOP,
 )
 
 
