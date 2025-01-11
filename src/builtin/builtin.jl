@@ -29,8 +29,8 @@ end
 function set_constant!(name::String, input::AbstractArray, output::DataType)
     @assert all(x -> x isa DataType, input)
     @assert output <: MuTypes.MuType
-    @assert !haskey(TFUNCS, name)
-    @assert haskey(BUILTINS, name)
+    @assert !haskey(TFUNCS, name) "TFunc $name already exists"
+    @assert haskey(BUILTINS, name) "Builtin $name does not exist"
     TFUNCS[name] = function (argtypes::AbstractArray)
         for (i, (argtype, expected)) in enumerate(zip(argtypes, input))
             if !(MuTypes.issubtype(argtype, expected))
