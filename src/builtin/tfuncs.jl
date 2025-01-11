@@ -49,11 +49,34 @@ set_constant!("length_str",     [MuTypes.String],                 MuTypes.Int)
 set_constant!("get_str",        [MuTypes.String, MuTypes.Int],    MuTypes.String)
 set_constant!("mul_str_str",    [MuTypes.String, MuTypes.Int],    MuTypes.String)
 
-
 # Array operations
-set_constant!("size_arr",       [MuTypes.AbstractArray],          MuTypes.Array{MuTypes.Int, 1})
-set_constant!("length_arr",     [MuTypes.AbstractArray],          MuTypes.Int)
-set_constant!("eachindex_arr",  [MuTypes.AbstractArray],          MuTypes.AbstractArray)
+TFUNCS["size_arr"] = function (argtypes::AbstractArray)
+    if !(MuTypes.issubtype(argtypes[1], MuTypes.AbstractArray))
+        @warn "Try to get size of $(argtypes[1]). Expecting an array type."
+        return MuTypes.Bottom
+    end
+
+    return MuTypes.Array{MuTypes.Int, 1}
+end
+
+TFUNCS["length_arr"] = function (argtypes::AbstractArray)
+    if !(MuTypes.issubtype(argtypes[1], MuTypes.AbstractArray))
+        @warn "Try to get length of $(argtypes[1]). Expecting an array type."
+        return MuTypes.Bottom
+    end
+
+    return MuTypes.Int
+end
+
+TFUNCS["eachindex_arr"] = function (argtypes::AbstractArray)
+    if !(MuTypes.issubtype(argtypes[1], MuTypes.AbstractArray))
+        @warn "Try to get eachindex of $(argtypes[1]). Expecting an array type."
+        return MuTypes.Bottom
+    end
+
+    return MuTypes.Array{MuTypes.Int, 1}
+end
+
 
 TFUNCS["get_arr"] = function (argtypes::Vector{DataType})
     if !(MuTypes.issubtype(argtypes[1], MuTypes.AbstractArray))
@@ -70,11 +93,6 @@ TFUNCS["set_arr"] = function (argtypes::AbstractArray)
 
     if !(MuTypes.issubtype(arrtype, MuTypes.AbstractArray))
         @warn "Try to set value to $(arrtype). Expecting an array type."
-        return MuTypes.Bottom
-    end
-
-    if !(idxtype <: MuTypes.Int)
-        @warn "Try to set value to $(arrtype) with index $(idxtype). Expecting an integer index."
         return MuTypes.Bottom
     end
 
