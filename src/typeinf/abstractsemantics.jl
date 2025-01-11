@@ -53,10 +53,17 @@ function _abstract_execute(expr::MuAST.Expr, astate::AbstractState)
     f, args... = expr.args
     arg_abstractvalues = fix_args(args, astate)
 
-    if expr.head == MuAST.BCALL
-        return _abstract_builtincall(f, arg_abstractvalues)
-    elseif expr.head == MuAST.GCALL
-        return _abstract_genericscall(f, arg_abstractvalues, astate)
+    if expr.head == MuAST.BCALL || expr.head == MuAST.GCALL
+        try
+            if expr.head == MuAST.BCALL
+                return _abstract_builtincall(f, arg_abstractvalues)
+            else
+                return _abstract_genericscall(f, arg_abstractvalues, astate)
+            end
+        catch e
+            @error "Failed to call $(expr.head) function $(f.name) with arguments $(arg_abstractvalues) with state $(astate)"
+            rethrow(e)
+        end
     else
         throw(ArgumentError("Unknown expression type: $(expr.head). Expected `IDENT`, `LITERAL`, `BCALL`, or `GCALL`"))
     end
