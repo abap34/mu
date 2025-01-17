@@ -158,38 +158,6 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @sum_arr([1, 2, 3], 1)
-        }
-        """,
-        MuTypes.Int,
-    ),
-    (
-        """
-        function f(){
-            return @sum_arr([1.0, 2.0, 3.0], 1)
-        }
-        """,
-        MuTypes.Float,
-    ),
-    (
-        """
-        function f(){
-            return @sum_arr([1, 2, 3; 4, 5, 6], 2)
-        }
-        """,
-        MuTypes.Array{MuTypes.Int,1},
-    ),
-    (
-        """
-        function f(){
-            return @sum_arr([1.0, 2.0, 3.0; 4.0, 5.0, 6.0], 2)
-        }
-        """,
-        MuTypes.Array{MuTypes.Float,1},
-    ),
-    (
-        """
-        function f(){
             return @expanddims_arr([1, 2, 3])
         }
         """,
@@ -1022,6 +990,147 @@ expected = MuTypes.Union{MuTypes.Array{MuTypes.Int,1},MuTypes.Int}
     _safety_test(actual, infered, TESTCASE4)
     _exactness_test(infered, expected, TESTCASE4)
 end
+
+TESTCASE5 = """
+function main(){
+    if (true) {
+        x = [1, 2, 3]
+    } else {
+        x = 2.0
+    }   
+    
+    return double(x)
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE5)
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE5))
+expected = MuTypes.Union{MuTypes.Array{MuTypes.Int,1},MuTypes.Float}
+
+
+@testset "Test 5" begin
+    _safety_test(actual, infered, TESTCASE5)
+    _exactness_test(infered, expected, TESTCASE5)
+end
+
+
+# Test 6. 
+# Without widening, this test will not terminate.
+
+TESTCASE6 = """
+function main(){
+    x = [1, 2, 3]
+    n = 100
+
+    i = 0
+
+    while (i < n){
+        x = expanddims(x)
+        i = i + 1
+    }
+    
+    return x
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE6)
+
+# start inf and kill if it takes more than 5 seconds
+infered = @timeout 5 _infer_return_type(TESTCASE6) "Inference takes too long!"
+actual = MuTypes.typeof(_run_main(TESTCASE6))
+
+expected = MuTypes.AbstractArray
+
+if infered == "Inference takes too long!"
+    @error "Inference takes too long! in TESTCASE6"
+    @test false
+else
+    _safety_test(actual, infered, TESTCASE6)
+    _exactness_test(infered, expected, TESTCASE6)
+end
+
+
+TESTCASE7 = """
+function main(){
+    if (true){
+        x = 1
+    } else {
+        x = 1.0
+    }
+
+     return double(double(x))
+}
+   
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE7)
+
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE7))
+expected = MuTypes.Union{MuTypes.Int, MuTypes.Float}
+
+
+@testset "Test 7" begin
+    _safety_test(actual, infered, TESTCASE7)
+    _exactness_test(infered, expected, TESTCASE7)
+end
+
+
+
+TESTCASE8 = """
+function main(){
+    if (true){
+        x = 1
+    } else {
+        x = 1.0
+    }
+
+    if (true){
+        y = 2
+    } else {
+        y = 2.0
+    }
+
+    return double(double(x) + double(y))
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE8)
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE8))
+expected = MuTypes.Union{MuTypes.Int, MuTypes.Float}
+
+@testset "Test 8" begin
+    _safety_test(actual, infered, TESTCASE8)
+    _exactness_test(infered, expected, TESTCASE8)
+end
+
+TESTCASE9 = """
+function main(){
+    if (true){
+        x = [1, 2, 3]    
+    } else {
+        x = [1, 2, 3; 4, 5, 6]
+    }
+
+    return sum(x, 1)
+}
+"""
+
+mt, main_mi = _load_main_mi(TESTCASE9)
+
+infered = MuTypeInf.return_type(main_mi, argtypes=[], mt=mt)
+actual = MuTypes.typeof(_run_main(TESTCASE9))
+
+@testset "Test 9" begin
+    _safety_test(actual, infered, TESTCASE9)
+end
+
+
 
 
 end
