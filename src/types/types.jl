@@ -35,13 +35,13 @@ struct Union{S<:MuType,T<:MuType} <: MuType end
 struct Bottom <: MuType end
 
 
-is_concrete(::Type{Any}) = false
-is_concrete(::Type{Number}) = false
-is_concrete(::Type{Real}) = false
-is_concrete(::Type{AbstractString}) = false
-is_concrete(::Type{AbstractArray}) = false
-is_concrete(::Type{<:Union}) = false
-is_concrete(::Type{Bottom}) = false
+isconcreate(::Type{Any}) = false
+isconcreate(::Type{Number}) = false
+isconcreate(::Type{Real}) = false
+isconcreate(::Type{AbstractString}) = false
+isconcreate(::Type{AbstractArray}) = false
+isconcreate(::Type{<:Union}) = false
+isconcreate(::Type{Bottom}) = false
 
 is_concrete(::Type{Int}) = true
 is_concrete(::Type{Float}) = true
