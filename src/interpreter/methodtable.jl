@@ -222,7 +222,7 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
 
     if exact_match && isempty(match_methods)
         throw(ArgumentError("""
-            No method found matching the signature. 
+            `$name` does not have a method with the given signature.
             Given signature: $expect_signature
             Candidates     : $(join([mi.signature for mi in candidates], "\n"))
             """))
