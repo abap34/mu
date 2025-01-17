@@ -181,6 +181,19 @@ function eachindex(arr::AbstractArray){
     return @eachindex_arr(arr)
 }
 
+function expanddims(arr::AbstractArray){
+    return @expanddims_arr(arr)
+}
+
+function sum(arr::AbstractArray, dims::Int){
+    s = @sum_arr(arr, dims)
+    if (length(s) == 1){
+        return get(s, 1)
+    } else {
+        return s
+    }
+}
+
 
 """
 

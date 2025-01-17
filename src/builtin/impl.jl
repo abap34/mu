@@ -72,20 +72,11 @@
 #  [1] Tuple doesn't exist in Mu, so we use Array instead in some cases. (Any other AbstractArray are not supported yet. So use `Base.Array`
 #  [2] Some operations are different from Julia's Base functions. (e.g. `sum` function) 
 
-function mu_sum(arr::AbstractArray, dims::Int)
-    s = Base.dropdims(Base.sum(arr, dims=dims), dims=dims)
-    if ndims(s) == 0
-        return s[1]
-    else
-        return s
-    end
-end
-
 @builtin size_arr(args::AbstractArray, env::Dict{String,Any}) = Base.size(args[1]) |> Base.collect |> Base.Array
 @builtin length_arr(args::AbstractArray, env::Dict{String,Any}) = Base.length(args[1])
 @builtin get_arr(args::AbstractArray, env::Dict{String,Any}) = args[1][args[2]]
 @builtin set_arr(args::AbstractArray, env::Dict{String,Any}) = (args[1][args[2]] = args[3]; return 0)
 @builtin similar_arr(args::AbstractArray, env::Dict{String,Any}) = Base.similar(args[1])
 @builtin expanddims_arr(args::AbstractArray, env::Dict{String,Any}) = Base.reshape(args[1], Base.size(args[1])..., 1)
-@builtin sum_arr(args::AbstractArray, env::Dict{String,Any}) = mu_sum(args[1], args[2])
+@builtin sum_arr(args::AbstractArray, env::Dict{String,Any}) = Base.sum(args[1], dims=args[2])
 @builtin eachindex_arr(args::AbstractArray, env::Dict{String,Any}) = Base.eachindex(args[1]) |> Base.collect |> Base.Array

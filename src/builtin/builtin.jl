@@ -1,6 +1,6 @@
 module MuBuiltins
 
-using ..MuTypes
+import ..MuTypes
 
 const BUILTINS = Dict{String,Function}()
 const TFUNCS = Dict{String,Function}()
