@@ -4,6 +4,21 @@ using ArgParse
 onfail(body, _::Test.Pass) = true
 onfail(body, _::Union{Test.Fail,Test.Error}) = body()
 
+# https://discourse.julialang.org/t/simple-timeout-of-function/99578/5?u=abap34
+macro timeout(seconds, expr_to_run, expr_when_fails)
+    quote
+        tsk = @task $(esc(expr_to_run))
+        schedule(tsk)
+        Timer($(esc(seconds))) do timer
+            istaskdone(tsk) || Base.throwto(tsk, InterruptException())
+        end
+        try
+            fetch(tsk)
+        catch _
+            $(esc(expr_when_fails))
+        end
+    end
+end
 
 function load(filename::AbstractString)
     return join(readlines(filename), "\n")
