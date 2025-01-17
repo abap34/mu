@@ -1,5 +1,26 @@
 function _abstract_builtincall(f, arg_abstractvalues)::DataType
-    return MuBuiltins.get_tfuncs(f.name)(arg_abstractvalues)
+    if all(t -> !(MuTypes.isunion(t)), arg_abstractvalues)
+        return MuBuiltins.get_tfuncs(f.name)(arg_abstractvalues)
+    end
+
+    # Expand all union types
+
+    expanded = map(MuTypes.expand_types, arg_abstractvalues)
+    candidates = [collect(t) for t in Iterators.product(expanded...)]
+
+    results = DataType[]
+    
+    for candidate in candidates
+        try
+            result = MuBuiltins.get_tfuncs(f.name)(candidate)
+            push!(results, result)
+        catch e
+            @error "Failed to call $(f.name) with arguments $(candidate)"
+            rethrow(e)
+        end
+    end
+
+    return MuTypes.uniontype(results)
 end
 
 function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)::DataType
