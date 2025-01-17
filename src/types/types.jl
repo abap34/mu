@@ -70,6 +70,25 @@ supertype(::Type{Bottom}) = throw(DomainError("Cannot get supertype of `Bottom``
 isunion(::Type{Union{S,T}}) where {S,T} = true
 isunion(::Type{T}) where {T<:MuType} = false
 
+function uniontype(types::Base.AbstractArray)
+    _types = copy(types)
+
+    if isempty(_types)
+        return Union{Bottom, Bottom}
+    end
+
+    t = pop!(_types)
+    while !isempty(_types)
+        t = Union{t, pop!(_types)}
+    end
+
+    return t
+end
+
+parameterlength(::Type{Union{S,T}}) where {S,T} = parameterlength(S) + parameterlength(T) + 2
+parameterlength(::Type{Array{T,N}}) where {T,N} = 2
+parameterlength(::Type{SizeArray{N}}) where {N} = 1
+parameterlength(::Type{T}) where {T<:MuType} = 0
 
 # Expand Union type.
 # e.g. expand_types(Union{Int, Union{Float, Bool}}) => [Int, Float, Bool]
