@@ -35,19 +35,20 @@ struct Union{S<:MuType,T<:MuType} <: MuType end
 struct Bottom <: MuType end
 
 
-is_concrete(::Type{Any}) = false
-is_concrete(::Type{Number}) = false
-is_concrete(::Type{Real}) = false
-is_concrete(::Type{AbstractString}) = false
-is_concrete(::Type{AbstractArray}) = false
-is_concrete(::Type{<:Union}) = false
-is_concrete(::Type{Bottom}) = false
+isconcrete(::Type{Any}) = false
+isconcrete(::Type{Number}) = false
+isconcrete(::Type{Real}) = false
+isconcrete(::Type{AbstractString}) = false
+isconcrete(::Type{AbstractArray}) = false
+isconcrete(::Type{<:Union}) = false
+isconcrete(::Type{Bottom}) = false
 
-is_concrete(::Type{Int}) = true
-is_concrete(::Type{Float}) = true
-is_concrete(::Type{Bool}) = true
-is_concrete(::Type{String}) = true
-is_concrete(::Type{<:Array}) = true
+isconcrete(::Type{Int}) = true
+isconcrete(::Type{Float}) = true
+isconcrete(::Type{Bool}) = true
+isconcrete(::Type{String}) = true
+isconcrete(::Type{<:Array}) = true
+isconcrete(::Type{<:Tuple}) = true
 
 
 supertype(::Type{Any}) = throw(ArgumentError("`Any` has no supertype"))

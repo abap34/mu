@@ -43,7 +43,7 @@ const TARGET_CONCREATE_TYPES = [
 
 @testset "Concreate check" begin
     for t in TARGET_CONCREATE_TYPES
-        onfail(@test MuTypes.is_concrete(t)) do
+        onfail(@test MuTypes.isconcrete(t)) do
             @error "Failed! $t must be concrete type. But `MuTypes.is_concrete(t)` returns false or error."
         end
     end
