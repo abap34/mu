@@ -27,7 +27,7 @@ macro builtin(ex)
 end
 
 function set_constant!(name::String, input::AbstractArray, output::DataType)
-    @assert all(x -> x isa DataType, input)
+    @assert all(x -> x <: MuType, input) "All input types must be DataTypes. $(input[findfirst(x -> !(x isa DataType), input)]) is not"
     @assert output <: MuTypes.MuType
     @assert !haskey(TFUNCS, name) "TFunc $name already exists"
     @assert haskey(BUILTINS, name) "Builtin $name does not exist"
@@ -44,6 +44,15 @@ end
 
 include("impl.jl")
 include("tfuncs.jl")
+
+
+function get_tfuncs(fname::String)
+    if !(haskey(TFUNCS, fname))
+        Base.throw("Unknown tfunc: $fname")
+    end
+
+    return TFUNCS[fname]
+end
 
 
 end # module MuBuiltins

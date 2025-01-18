@@ -181,7 +181,37 @@ function eachindex(arr::AbstractArray){
     return @eachindex_arr(arr)
 }
 
+function size(arr::AbstractArray){
+    return @size_arr(arr)    
+}
 
+function expanddims(arr::AbstractArray){
+    result_size = append(size(arr), 1)
+    return reshape(arr, result_size)
+}
+
+function length(arr::AbstractArray){
+    _s = @size(arr)
+    i = 1
+    I = eachindex(_s)
+
+    s = 1
+    while (i <= length(I)){
+        idx = get(I, i)
+        s = s * get(_s, idx)    
+    }
+
+    return s    
+}
+
+
+function pop(t::Any){
+    return @pop_tuple(t)
+}
+
+function append(t::Any, x::Any){
+    return @append_tuple(t, x)
+}
 """
 
 const _BASE_AST = MuCore.parse(BASE)
@@ -195,7 +225,3 @@ end
 function load_base()::MuCore.MuInterpreter.MethodTable
     return copy(_BASE_LOADED_MT)
 end
-
-
-
-
