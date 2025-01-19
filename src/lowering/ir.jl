@@ -135,17 +135,16 @@ end
 struct MethodInstance
     name::MuAST.Ident               # Name of the method (not unique) 
     argname::Vector{MuAST.Ident}    # Argument names (e.g. [`a`, `b`, `c`])
-    signature::Vector{DataType}     # Signature of the method. All elements must be MuTypes.
+    signature::MuTypes.Signature    # Signature of the method. All elements must be MuTypes.
     ci::CodeInfo                    # IR of the method
     id::Int                         # id of the method (unique)
-    function MethodInstance(name::MuAST.Ident, argname::AbstractArray, signature::AbstractArray, ci::CodeInfo, id::Int)
+    function MethodInstance(name::MuAST.Ident, argname::AbstractArray, signature::MuTypes.Signature, ci::CodeInfo, id::Int)
         if length(argname) != length(signature)
             throw(ArgumentError("Length of argname and signature must be the same. Got $(length(argname)) and $(length(signature))"))
         end
 
-        if any(sig -> !(sig <: MuTypes.MuType), signature)
-            throw(ArgumentError("All signature must be MuTypes. Got $signature"))
-        end
+        all(arg -> arg isa MuAST.Ident, argname) || throw(ArgumentError("argname must be Vector{MuAST.Ident}. Got $(argname)"))
+
 
         return new(name, argname, signature, ci, id)
     end
@@ -156,22 +155,15 @@ function get_names(formalargs::MuAST.Expr)
     return [arg.args[1] for arg in formalargs.args]
 end
 
-function formalarg_to_signature(formalargs::MuAST.Expr)
-    @assert formalargs.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
-    return Any[MuTypes.expr_to_type(arg.args[2]) for arg in formalargs.args]
-end
-
 function MethodInstance(name::MuAST.Ident, args::MuAST.Expr, ir::CodeInfo, id::Int)
     if args.head != MuAST.FORMALARGS
         throw(ArgumentError("Arguments must be `FORMALARGS`. Got $(args.head)"))
     end
-    return MethodInstance(name, get_names(args), formalarg_to_signature(args), ir, id)
+    return MethodInstance(name, get_names(args), MuTypes.formalargs_to_signature(args), ir, id)
 end
 
 
 Base.length(ci::CodeInfo) = length(ci.instrs)
-# Base.push!(ir::CodeInfo, instr::Instr) = push!(ir.instrs, instr)
-
 
 function newvar!(ci::CodeInfo, name::MuAST.Ident, dtype::Union{DataType,Nothing})
     if !(name in ci.varnames)

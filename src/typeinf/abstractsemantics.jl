@@ -5,7 +5,7 @@ end
 function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)::DataType
     mt = astate.mt
 
-    macthed_methods = MuInterpreter.lookup(mt, f, arg_abstractvalues, matching=:possible)
+    macthed_methods = MuInterpreter.lookup(mt, f, MuTypes.Signature(arg_abstractvalues), matching=:possible)
 
     inferred = MuTypes.Bottom
 
@@ -61,7 +61,7 @@ function _abstract_execute(expr::MuAST.Expr, astate::AbstractState)
                 return _abstract_genericscall(f, arg_abstractvalues, astate)
             end
         catch e
-            @error "Failed to call $(expr.head) function $(f.name) with arguments $(arg_abstractvalues) with state $(astate)"
+            @error "Failed to call $(expr.head) function $(f.name) with arguments:\n$(arg_abstractvalues) with state:\n$(astate)"
             rethrow(e)
         end
     else
