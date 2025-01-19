@@ -128,10 +128,12 @@ set_constant!("eachindex_arr", [MuTypes.AbstractArray], MuTypes.Array{MuTypes.In
 
 function size_arr_tfunc(argtypes::AbstractArray)
     (argtypes[1] == MuTypes.AbstractArray) && (return MuTypes.Any)
+
+    dim = _get_array_dim(argtypes[1])
     
-    component = [MuTypes.Int for _ in 1:_get_array_dim(argtypes[1])]
-     
-    return MuTypes.uniontype(component)
+    component = fill(MuTypes.Int, dim)
+
+    return MuTypes.tupletype(component)
 end
 
 TFUNCS["size_arr"] = arr_union_unwrap(size_arr_tfunc)
