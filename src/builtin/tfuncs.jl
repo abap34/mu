@@ -108,19 +108,22 @@ function reshape_arr_tfunc(argtypes::AbstractArray)
     elem = _get_array_eltype(arr)
     dim = length(MuTypes.component_types(reshaped_size))
 
-    return Array{elem, dim}
+    return MuTypes.Array{elem, dim}
 end    
 
 TFUNCS["reshape_arr"] = arr_union_unwrap(reshape_arr_tfunc)
 
 function get_arr_tfunc(argtypes::AbstractArray)
-    (arr == MuTypes.AbstractArray) && (return MuTypes.AbstractArray)
-    return _get_array_eltype(arr)
+    arr_type, idx_type = argtypes
+    (arr_type == MuTypes.AbstractArray) && (return MuTypes.AbstractArray)
+    return _get_array_eltype(arr_type)
 end
+
+TFUNCS["get_arr"] = arr_union_unwrap(get_arr_tfunc)
 
 set_constant!("set_arr", [MuTypes.AbstractArray, MuTypes.Int, MuTypes.Any], MuTypes.Int)
 
-set_constant!("eachindex_arr", [MuTypes.AbstractArray], MuTypes.Int)
+set_constant!("eachindex_arr", [MuTypes.AbstractArray], MuTypes.Array{MuTypes.Int, 1})
 
 function size_arr_tfunc(argtypes::AbstractArray)
     (argtypes[1] == MuTypes.AbstractArray) && (return MuTypes.Any)
@@ -130,12 +133,14 @@ function size_arr_tfunc(argtypes::AbstractArray)
     return MuTypes.uniontype(component)
 end
 
-TFUNCS["size_arr"] = size_arr_tfunc
+TFUNCS["size_arr"] = arr_union_unwrap(size_arr_tfunc)
 
 
 function similar_arr_tfunc(argtypes::AbstractArray)
     arr_type = first(argtypes)
     (arr_type == MuTypes.AbstractArray) && (return MuTypes.AbstractArray)
 
-    return Array{_get_array_eltype(arr_type), _get_array_dim(arr_type)}
+    return MuTypes.Array{_get_array_eltype(arr_type), _get_array_dim(arr_type)}
 end
+
+TFUNCS["similar_arr"] = arr_union_unwrap(similar_arr_tfunc)
