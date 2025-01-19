@@ -224,6 +224,18 @@ for mi in MuCore.lowering(_BASE_AST)
     MuCore.MuInterpreter.add_method!(_BASE_LOADED_MT, mi)
 end
 
-function load_base()::MuCore.MuInterpreter.MethodTable
-    return copy(_BASE_LOADED_MT)
+function load_base(;reload=false)::MuCore.MuInterpreter.MethodTable
+    # return copy(_BASE_LOADED_MT)
+    if reload
+        base_ast = MuCore.parse(BASE)
+        base_mt = MuCore.MuInterpreter.MethodTable()
+
+        for mi in MuCore.lowering(base_ast)
+            MuCore.MuInterpreter.add_method!(base_mt, mi)
+        end
+
+        return base_mt
+    else
+        return copy(_BASE_LOADED_MT)
+    end
 end

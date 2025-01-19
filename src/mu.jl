@@ -21,13 +21,13 @@ include("base/base.jl")
 end
 
 
-function run(filename::AbstractString, mode=:interpret)
+function run(filename::AbstractString, mode=:interpret; reload_base=false)
     @assert mode in [:interpret, :compile] "Invalid mode: $mode. Must be either :interpret or :compile"
 
     ast = MuCore.parse_file(filename)
     ci = MuCore.lowering(ast)
     if mode == :interpret
-        interp = MuCore.MuInterpreter.NativeInterpreter(methodtable=MuBase.load_base())
+        interp = MuCore.MuInterpreter.NativeInterpreter(methodtable=MuBase.load_base(reload=reload_base))
 
         MuCore.MuInterpreter.interpret(ci, interp)
     elseif mode == :compile
