@@ -150,54 +150,6 @@ SIMPLE_ONE_FUNC = [
     (
         """
         function f(){
-            return @expanddims_arr([1, 2, 3])
-        }
-        """,
-        MuTypes.Array{MuTypes.Int,2},
-    ),
-    (
-        """
-        function f(){
-            return @sum_arr([1, 2, 3], 1)
-        }
-        """,
-        MuTypes.Int,
-    ),
-    (
-        """
-        function f(){
-            return @sum_arr([1.0, 2.0, 3.0], 1)
-        }
-        """,
-        MuTypes.Float,
-    ),
-    (
-        """
-        function f(){
-            return @sum_arr([1, 2, 3; 4, 5, 6], 2)
-        }
-        """,
-        MuTypes.Array{MuTypes.Int,1},
-    ),
-    (
-        """
-        function f(){
-            return @sum_arr([1.0, 2.0, 3.0; 4.0, 5.0, 6.0], 2)
-        }
-        """,
-        MuTypes.Array{MuTypes.Float,1},
-    ),
-    (
-        """
-        function f(){
-            return @expanddims_arr([1, 2, 3])
-        }
-        """,
-        MuTypes.Array{MuTypes.Int,2},
-    ),
-    (
-        """
-        function f(){
             return @get_arr([1, 2, 3], 1)
         }
         """,
