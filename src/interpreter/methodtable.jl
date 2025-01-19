@@ -1,82 +1,10 @@
 using ..MuTypes
 
-function _is_argtype(tarr::AbstractArray)
-    for t in tarr
-        if !(t <: MuTypes.MuType)
-            return false
-        end
-    end
-
-    return true
-end
-
-
-# Exists an `i` s.t t1[i] <: t2[i]
-# and no `j` s.t t2[j] <: t1[j], t1 is more specific than t2.
-# check no `j` s.t t2[j] <: t1[j]
-function specificity(t1::AbstractArray{DataType}, t2::AbstractArray{DataType})
-    (length(t1) == length(t2)) || throw(ArgumentError("Length of t1 and t2 must be the same. Got $(length(t1)) and $(length(t2))"))
-    (_is_argtype(t1) && _is_argtype(t2)) || throw(ArgumentError("All arguments must be MuTypes. Got $t1 and $t2"))
-
-    for j in eachindex(t1)
-        if MuTypes.issubtype(t2[j], t1[j])
-            return false
-        end
-    end
-
-    # check exists an `i` s.t t1[i] <: t2[i]
-    for i in eachindex(t1)
-        if MuTypes.issubtype(t1[i], t2[i])
-            return true
-        end
-    end
-
-    return false
-end
-
-
-# Is is allowed to call a function with the given signature with the given actual arguments?
-function ismatch(signature::AbstractArray, actual_args::AbstractArray)
-    (_is_argtype(signature) && _is_argtype(actual_args)) || throw(ArgumentError("All arguments must be MuTypes. Got $signature and $actual_args"))
-    
-    
-    (length(signature) != length(actual_args)) && return false
-
-    for (sig, actual) in zip(signature, actual_args)
-        if !MuTypes.issubtype(actual, sig)
-            return false
-        end
-    end
-
-    return true
-end
-
-
-# Is there a possibility to call a `signature` with subtypes of `actual_args`?
-# e.g. ispossible([Int, Int], [Real, Real]) => true. 
-#      ispossible([Int, Int], [Real, Bool]) => false. 
-#      ispossible([Int, Int], [Union{Int, Float}, Union{Int, Bool}]) => true.
-function ispossible(signature::AbstractArray, actual_args::AbstractArray)
-    (_is_argtype(signature) && _is_argtype(actual_args)) || throw(ArgumentError("All arguments must be MuTypes. Got $signature and $actual_args"))
-
-    (length(signature) != length(actual_args)) && return false
-
-
-    for (sig, actual) in zip(signature, actual_args)
-        meet = MuTypes.meettype(sig, actual)
-        if meet == MuTypes.Bottom
-            return false
-        end
-    end
-
-    return true
-end
-
 
 # Wrapper for a dictionary of method tables
 struct MethodTable
     # Function name -> Vector of MethodInstance
-    table::Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}
+    table::Dict{MuAST.Ident, Vector{MuIR.MethodInstance}}
     function MethodTable(;table::Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}=Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}())
         new(table)
     end
@@ -181,14 +109,12 @@ end
 # If `matching` is `:exact`, return the first method which matches the signature.
 # If `matching` is `:possible`, return all methods which can be called with the given signature.
 # If `matching` is `:all`, return all methods which match the signature.
-function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::AbstractArray; matching::Symbol=:exact)::Vector{Int}
+function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::MuTypes.Signature; matching::Symbol=:exact)::Vector{Int}
     (matching in (:exact, :possible, :all)) || throw(ArgumentError("Matching must be one of :exact, :possible, :all. Got $matching"))
-    _is_argtype(expect_signature) || throw(ArgumentError("All arguments must be MuTypes. Got $expect_signature"))
 
-    matcher = (matching == :exact || matching == :all) ? ismatch : ispossible
+    matcher = (matching == :exact || matching == :all) ? MuTypes.ismatch : MuTypes.ispossible
     exact_match = matching == :exact
 
-    
     if !haskey(methodtable.table, name)
         throw(ArgumentError("Method $name not found in method table. Available methods: $(method_names(methodtable))"))
     end
@@ -199,7 +125,7 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
     candidates = filter(method -> length(method.signature) == length(expect_signature), candidates)
 
     # Sort by signatures "specificity"
-    candidates = sort(candidates, lt=(a, b) -> specificity(a.signature, b.signature))
+    candidates = sort(candidates, lt=(a, b) -> MuTypes.specificity(a.signature, b.signature))
 
     match_methods = Int[]
 
@@ -209,7 +135,7 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
             # Check next candidate is same specificity and matches. 
             # If so, throw and `AmbiguousMethodError`
             if exact_match
-                if i < length(candidates) && specificity(candidates[i+1].signature, mi.signature)
+                if i < length(candidates) && MuTypes.specificity(candidates[i+1].signature, mi.signature)
                     throw(AmbiguousMethodError("Ambiguous method call. Multiple methods match the signature."))
                 end
                 return [mi.id,]
@@ -222,9 +148,10 @@ function lookup(methodtable::MethodTable, name::MuAST.Ident, expect_signature::A
 
     if exact_match && isempty(match_methods)
         throw(ArgumentError("""
-            No method found matching the signature. 
+            No method found for $name with 
             Given signature: $expect_signature
-            Candidates     : $(join([mi.signature for mi in candidates], "\n"))
+            Candidates     : $(candidates[1].signature)
+                             $(join([mi.signature for mi in candidates[2:end]], "\n"))
             """))
     end
 
