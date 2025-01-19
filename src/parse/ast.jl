@@ -24,7 +24,7 @@ end
 const UNUSED_IDENT = Ident("_")
 const RETURN_IDENT = Ident("%ret")
 
-const Literal = Union{Int,Float64,String,Bool,Array} 
+const Literal = Union{Int,Float64,String,Bool,Array,Tuple}
 const SyntaxNode = Union{AbstractSyntaxNode, Literal}
 
 @enum ExprHead begin
