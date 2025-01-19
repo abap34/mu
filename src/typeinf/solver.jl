@@ -31,9 +31,35 @@ function build_pred(ci::MuIR.CodeInfo)
     return pred
 end
 
-function ∇(new_output, current_output)
-    return new_output
+const MAX_PARAMETER_LENGTH = 10
+# **Try to** find the minimum supertype of a set of types.
+# (This is a very naive implementation, and is not guaranteed to be find the minimum supertype.
+#  It is only guaranteed to find a supertype.)
+function minimum_supertype(types::Vector{DataType})
+    candidates = [
+        MuTypes.Real, 
+        MuTypes.AbstractString,
+        MuTypes.AbstractArray,
+        MuTypes.Any
+    ]
+    for c in candidates
+        if all(t -> MuTypes.issubtype(t, c), types)
+            return c
+        end
+    end
+    return MuTypes.Any
 end
+
+function ∇(new_output, current_output)
+    _new_output = copy(new_output)
+    for (k, t) in new_output.state
+        if MuTypes.parameterlength(t) > MAX_PARAMETER_LENGTH
+            _new_output.state[k] = minimum_supertype(MuTypes.expand_types(t))
+        end
+    end
+    return _new_output
+end
+
 
 function ⊔(state1::AbstractState, state2::AbstractState)
     new_state = copy(state1)
