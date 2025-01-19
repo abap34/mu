@@ -134,7 +134,7 @@ expand_types(::Type{T}) where {T <: MuType} = [T]
 #
 # Note: separate function from `expand_types` because of avoid this behavior: 
 # expand_types(Union{Tuple{Int, Float}, Tuple{Bool, String}}) => [Int, Float, Bool, String]
-component_types(::Type{Tuple{S, T}}) where {S, T} = [S, T]
+component_types(::Type{Tuple{S, T}}) where {S, T} = [component_types(S); component_types(T)]
 component_types(::Type{Tuple{S, Nil}}) where {S} = [S]
 component_types(::Type{Tuple{Nil, Nil}}) = []
 component_types(::Type{T}) where {T <: MuType} = [T]
