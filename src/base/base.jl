@@ -149,10 +149,6 @@ function print(s::Any){
     return @print(s)
 }
 
-function length(arr::AbstractArray){
-    return @length_arr(arr)
-}
-
 function length(S::String){
     return @length_str(S)
 }
@@ -181,24 +177,24 @@ function eachindex(arr::AbstractArray){
     return @eachindex_arr(arr)
 }
 
+function eachindex(t::Any){
+    return @eachindex_tuple(t)
+}
+    
+
 function size(arr::AbstractArray){
     return @size_arr(arr)    
 }
 
-function expanddims(arr::AbstractArray){
-    result_size = append(size(arr), 1)
-    return reshape(arr, result_size)
-}
-
 function length(arr::AbstractArray){
-    _s = @size(arr)
+    arr_size = size(arr)
     i = 1
-    I = eachindex(_s)
+    I = eachindex(arr_size)
 
     s = 1
     while (i <= length(I)){
         idx = get(I, i)
-        s = s * get(_s, idx)    
+        s = s * get(arr_size, idx)
     }
 
     return s    
@@ -211,6 +207,12 @@ function pop(t::Any){
 
 function append(t::Any, x::Any){
     return @append_tuple(t, x)
+}
+
+
+function expanddims(arr::AbstractArray){
+    result_size = append(size(arr), 1)
+    return reshape(arr, result_size)
 }
 """
 
