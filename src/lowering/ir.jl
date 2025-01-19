@@ -7,7 +7,7 @@ import ..MuAST
 import ..MuTypes
 
 
-@enum IRType begin
+@enum InstrType begin
     ASSIGN           # Assignment
     GOTO             # Goto label without condition
     GOTOIFNOT        # Goto label if condition is false.  
@@ -16,7 +16,7 @@ import ..MuTypes
 end
 
 struct Instr
-    irtype::IRType
+    instrtype::InstrType
     expr::MuAST.Expr
     function Instr(irtype::IRType, expr::MuAST.Expr)
         new(irtype, expr)
@@ -25,16 +25,15 @@ end
 
 
 function get_dest(instr::Instr)::Int
-    if !(instr.irtype == GOTO || instr.irtype == GOTOIFNOT)
-        throw(ArgumentError("Expected GOTO or GOTOIFNOT. Got $(instr.irtype)"))
+    if !(instr.instrtype == GOTO || instr.instrtype == GOTOIFNOT)
+        throw(ArgumentError("Expected GOTO or GOTOIFNOT. Got $(instr.instrtype)"))
     end
 
     return instr.expr.args[1]
 end
 
 function get_label(instr::Instr)::Int
-    if instr.irtype != LABEL
-        throw(ArgumentError("Expected LABEL. Got $(instr.irtype)"))
+    if instr.instrtype != LABEL
     end
 
     return instr.expr.args[1]
@@ -43,32 +42,32 @@ end
 # Get the return expression of the return statement.
 # e.g. `RETURN %1` -> `%1`, `RETURN 1` -> `1`, `RETURN 1 + 2` -> Expr(CALL, [add 1 2])
 function get_returnbody(instr::Instr)::MuAST.SyntaxNode
-    if instr.irtype != RETURN
-        throw(ArgumentError("Expected RETURN. Got $(instr.irtype)"))
+    if instr.instrtype != RETURN
+        throw(ArgumentError("Expected RETURN. Got $(instr.instrtype)"))
     end
 
     return instr.expr.args[1]
 end
 
 function get_varname(instr::Instr)::MuAST.Ident
-    if instr.irtype != ASSIGN
-        throw(ArgumentError("Expected ASSIGN. Got $(instr.irtype)"))
+    if instr.instrtype != ASSIGN
+        throw(ArgumentError("Expected ASSIGN. Got $(instr.instrtype)"))
     end
 
     return instr.expr.args[1]
 end
 
 function Base.show(io::IO, instr::Instr)
-    if instr.irtype == ASSIGN
+    if instr.instrtype == ASSIGN
         print(io, instr.expr.args[1].name, " = ", instr.expr.args[2])
-    elseif instr.irtype == GOTO
+    elseif instr.instrtype == GOTO
         dest = instr.expr.args[1]
         if dest == -1
             print(io, "GOTO RETURN")
         else
             print(io, "GOTO #", dest)
         end
-    elseif instr.irtype == GOTOIFNOT
+    elseif instr.instrtype == GOTOIFNOT
         dest = instr.expr.args[1]
         if dest == -1
             print(io, "GOTO RETURN IF NOT ", instr.expr.args[2])
@@ -76,18 +75,18 @@ function Base.show(io::IO, instr::Instr)
             print(io, "GOTO #", dest, " IF NOT ", instr.expr.args[2])
         end
 
-    elseif instr.irtype == LABEL
-        label = get_label(instr)    
+    elseif instr.instrtype == LABEL
+        label = get_label(instr)
         if label == -1
             print(io, "LABEL RETURN")
         else
             print(io, "LABEL #", label)
         end
 
-    elseif instr.irtype == RETURN
+    elseif instr.instrtype == RETURN
         print(io, "RETURN ", instr.expr.args[1])
     else
-        print(io, "#### Unknown IRType ####")
+        print(io, "#### Unknown InstrType ####")
     end
 end
 
@@ -155,14 +154,14 @@ end
 function Base.push!(ci::CodeInfo, instr::Instr)
     push!(ci.instrs, instr)
 
-    if instr.irtype == ASSIGN
+    if instr.instrtype == ASSIGN
         newvar!(ci, get_varname(instr), nothing)
     end
 end
 function Base.pushfirst!(ci::CodeInfo, instr::Instr)
     pushfirst!(ci.instrs, instr)
 
-    if instr.irtype == ASSIGN
+    if instr.instrtype == ASSIGN
         newvar!(ci, get_varname(instr), nothing)
     end
 end
@@ -199,13 +198,13 @@ function Base.show(io::IO, ci::CodeInfo)
     instrs = ci.instrs
 
     idx_width = max(ndigits(length(instrs)), 3)
-    irtype_width = max(maximum(x -> length(string(x.irtype)), instr for instr in instrs), 10)
+    instrtype_width = max(maximum(x -> length(string(x.instrtype)), instr for instr in instrs), 10)
 
-    println(io, "| ", lpad("idx", idx_width), " | ", lpad("irtype", irtype_width), " | instr")
-    println(io, "| ", "-"^idx_width, " | ", "-"^irtype_width, " | ", "-"^40)
+    println(io, "| ", lpad("idx", idx_width), " | ", lpad("instrtype", instrtype_width), " | instr")
+    println(io, "| ", "-"^idx_width, " | ", "-"^instrtype_width, " | ", "-"^40)
 
     for (idx, instr) in enumerate(instrs)
-        println(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.irtype), irtype_width), " | ", instr)
+        println(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.instrtype), instrtype_width), " | ", instr)
     end
 end
 

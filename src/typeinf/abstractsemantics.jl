@@ -12,7 +12,7 @@ function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)::D
     for methodid in macthed_methods
         mi = MuInterpreter.mi_by_id(mt, methodid)
         sig = mi.signature
-        
+
         _inferred = return_type(
             mi,
             argtypes=MuTypes.meettype.(sig, arg_abstractvalues),
@@ -71,7 +71,7 @@ end
 
 
 function abstract_semantics(instr::MuIR.Instr)::Function
-    if instr.irtype == MuIR.ASSIGN
+    if instr.instrtype == MuIR.ASSIGN
         lhs, rhs = instr.expr.args
         return function (astate)
             astate_new = copy(astate)
@@ -79,14 +79,14 @@ function abstract_semantics(instr::MuIR.Instr)::Function
             return astate_new
         end
 
-    elseif instr.irtype == MuIR.GOTO || instr.irtype == MuIR.GOTOIFNOT || instr.irtype == MuIR.LABEL
+    elseif instr.instrtype == MuIR.GOTO || instr.instrtype == MuIR.GOTOIFNOT || instr.instrtype == MuIR.LABEL
         return identity
 
-    elseif instr.irtype == MuIR.RETURN
+    elseif instr.instrtype == MuIR.RETURN
         return identity
 
     else
-        throw(ArgumentError("Unknown IRType: $(instr.irtype)"))
+        throw(ArgumentError("Unknown InstrType: $(instr.instrtype)"))
     end
 end
 

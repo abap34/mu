@@ -5,26 +5,26 @@ function build_pred(ci::MuIR.CodeInfo)
 
     # build label_to_pc 
     for (i, instr) in enumerate(ci)
-        if instr.irtype == MuIR.LABEL
+        if instr.instrtype == MuIR.LABEL
             label = MuIR.get_label(instr)
             label_to_pc[label] = i
         end
     end
 
     for (i, instr) in enumerate(ci)
-        if instr.irtype == MuIR.ASSIGN || instr.irtype == MuIR.LABEL
+        if instr.instrtype == MuIR.ASSIGN || instr.instrtype == MuIR.LABEL
             push!(pred[i+1], i)
-        elseif instr.irtype == MuIR.GOTO
+        elseif instr.instrtype == MuIR.GOTO
             dest = MuIR.get_dest(instr)
             push!(pred[label_to_pc[dest]], i)
-        elseif instr.irtype == MuIR.GOTOIFNOT
+        elseif instr.instrtype == MuIR.GOTOIFNOT
             dest = MuIR.get_dest(instr)
             push!(pred[i+1], i)
             push!(pred[label_to_pc[dest]], i)
-        elseif instr.irtype == MuIR.RETURN
+        elseif instr.instrtype == MuIR.RETURN
             continue  # RETURN must be the last instruction.
         else
-            throw(ArgumentError("Unknown IRType: $(instr.irtype)"))
+            throw(ArgumentError("Unknown InstrType: $(instr.instrtype)"))
         end
     end
 

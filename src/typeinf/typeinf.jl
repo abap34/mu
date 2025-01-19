@@ -205,15 +205,15 @@ function show_typing(mi::MuIR.MethodInstance, frame::InferenceFrame; io::IO=stdo
     instrs = ci.instrs
 
     idx_width = max(ndigits(length(instrs)), 3)
-    irtype_width = max(maximum(x -> length(string(x.irtype)), instr for instr in instrs), 10)
+    instrtype_width = max(maximum(x -> length(string(x.instrtype)), instr for instr in instrs), 10)
 
-    println(io, "| ", lpad("idx", idx_width), " | ", lpad("irtype", irtype_width), " | instr")
-    println(io, "| ", "-"^idx_width, " | ", "-"^irtype_width, " | ", "-"^40)
+    println(io, "| ", lpad("idx", idx_width), " | ", lpad("instrtype", instrtype_width), " | instr")
+    println(io, "| ", "-"^idx_width, " | ", "-"^instrtype_width, " | ", "-"^40)
 
     for (idx, instr) in enumerate(instrs)
-        print(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.irtype), irtype_width), " | ", instr)
+        print(io, "| ", lpad(string(idx), idx_width), " | ", lpad(string(instr.instrtype), instrtype_width), " | ", instr)
 
-        if instr.irtype == MuIR.ASSIGN
+        if instr.instrtype == MuIR.ASSIGN
             assign_var = MuIR.get_varname(instr)
 
             if assign_var.name == "_"
@@ -239,7 +239,7 @@ function show_typing(mi::MuIR.MethodInstance, frame::InferenceFrame; io::IO=stdo
             printstyled(io, "::", MuTypes.shorten_str(inferred_type), "\n", bold=true, color=color)
         else
             println(io, " ")
-        end 
+        end
     end
 
     printstyled(io, "=> ", MuTypes.shorten_str(lookup(frame.outputs[end], MuAST.RETURN_IDENT)), "\n", bold=true, color=:green)

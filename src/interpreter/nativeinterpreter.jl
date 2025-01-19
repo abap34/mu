@@ -64,7 +64,7 @@ mutable struct NativeInterpreter <: AbstractInterpreter
     label_to_pc::Dict{Int,Dict{Int,Int}}
     methodtable::MethodTable
     callstack::CallStack
-    function NativeInterpreter(;label_to_pc=Dict{Int,Dict{Int,Int}}(), methodtable=MethodTable(), callstack=CallStack())
+    function NativeInterpreter(; label_to_pc=Dict{Int,Dict{Int,Int}}(), methodtable=MethodTable(), callstack=CallStack())
         new(label_to_pc, methodtable, callstack)
     end
 end
@@ -112,7 +112,7 @@ function setup_labels!(interp::NativeInterpreter)
         interp.label_to_pc[mi.id] = Dict{Int,Int}()
 
         for (idx, instr) in enumerate(mi.ci)
-            if instr.irtype == MuIR.LABEL
+            if instr.instrtype == MuIR.LABEL
                 label = MuIR.get_label(instr)
                 interp.label_to_pc[mi.id][label] = idx
             end
@@ -181,7 +181,7 @@ function call_builtin!(interp::NativeInterpreter, name::MuAST.Ident, args::Vecto
         Arguments: $(args)
         Environment: $(currentframe(interp).env)
         """
-        
+
         rethrow(e)
     end
 end
@@ -194,16 +194,16 @@ function interpret_local!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
     try
         while frame.pc <= length(ci)
             instr = ci[frame.pc]
-            if instr.irtype == MuIR.ASSIGN
+            if instr.instrtype == MuIR.ASSIGN
                 lhs, rhs = instr.expr.args
                 bind!(frame, lhs.name, execute_expr!(interp, rhs))
                 frame.pc += 1
 
-            elseif instr.irtype == MuIR.GOTO
+            elseif instr.instrtype == MuIR.GOTO
                 dest = MuIR.get_dest(instr)
                 frame.pc = label_to_pc(interp, frame.method_id, dest)
 
-            elseif instr.irtype == MuIR.GOTOIFNOT
+            elseif instr.instrtype == MuIR.GOTOIFNOT
                 label, cond = instr.expr.args
 
 
@@ -213,14 +213,14 @@ function interpret_local!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
                     frame.pc += 1
                 end
 
-            elseif instr.irtype == MuIR.RETURN
+            elseif instr.instrtype == MuIR.RETURN
                 return execute_expr!(interp, MuIR.get_returnbody(instr))
 
-            elseif instr.irtype == MuIR.LABEL
+            elseif instr.instrtype == MuIR.LABEL
                 frame.pc += 1
 
             else
-                throw(ArgumentError("Unknown IRType: $(instr.irtype)"))
+                throw(ArgumentError("Unknown IRType: $(instr.instrtype)"))
             end
 
         end
@@ -237,7 +237,7 @@ function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
     load!(interp.methodtable, program)
 
     setup_labels!(interp)
-    
+
     main_id = first(lookup(interp.methodtable, MuAST.Ident("main"), DataType[], matching=:exact))
 
     push!(interp.callstack, Frame(main_id, 1, Env()))
