@@ -1,32 +1,25 @@
 
-# Conversion of Types between MuType and DataType, String
-const NON_PARMETRIC_TYPES_STR = ["Any", "Number", "Real", "Int", "Float", "Bool", "AbstractString", "String", "AbstractArray", "Bottom"]
+# Conversion of Types between MuType and DataType, Strin
+const STR_TO_NON_PARMETRIC_TYPES = Dict(
+    "Any" => Any,
+    "Number" => Number,
+    "Real" => Real,
+    "Int" => Int,
+    "Float" => Float,
+    "Bool" => Bool,
+    "AbstractString" => AbstractString,
+    "String" => String,
+    "AbstractArray" => AbstractArray,
+    "AbstractTuple" => AbstractTuple,
+    "Bottom" => Bottom
+)
+
+
+const NON_PARMETRIC_TYPES_STR = Set(keys(STR_TO_NON_PARMETRIC_TYPES))
 
 function _str_to_type(name::Base.String)
-    if name == "Any"
-        return Any
-    elseif name == "Number"
-        return Number
-    elseif name == "Real"
-        return Real
-    elseif name == "Int"
-        return Int
-    elseif name == "Float"
-        return Float
-    elseif name == "Bool"
-        return Bool
-    elseif name == "AbstractString"
-        return AbstractString
-    elseif name == "String"
-        return String
-    elseif name == "AbstractArray"
-        return AbstractArray
-    elseif name == "Array"
-        return Array
-    elseif name == "Tuple"
-        return Tuple
-    elseif name == "Bottom"
-        return Bottom
+    if name in NON_PARMETRIC_TYPES_STR
+        return STR_TO_NON_PARMETRIC_TYPES[name]
     else
         throw(ArgumentError("Cannot convert \"$name\" to MuType."))
     end
@@ -161,10 +154,9 @@ function expr_to_type(type::MuAST.Expr)::Type{<:MuType}
         end
 
         return t
-
-    else
-        throw(ArgumentError("Unknown type: $name"))
     end
+
+    throw(ArgumentError("Unknown type: $name"))
 end
 
 function typeof(v)
