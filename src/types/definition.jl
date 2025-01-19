@@ -97,10 +97,8 @@ function uniontype(types::Base.AbstractArray)
     return t |> normalize
 end
 
-uniontype(t::Base.Union) = Union{_type_to_mutype(t.a), uniontype(t.b)}
-uniontype(t::DataType) = _type_to_mutype(t)
 
-function tupletype(types::Base.AbstractArray)
+function tupletype(types::Base.AbstractArray)       
     if isempty(types)
         return Tuple{Nil, Nil}
     end
@@ -108,6 +106,7 @@ function tupletype(types::Base.AbstractArray)
     if length(types) == 1
         return Tuple{types[1], Nil}
     end
+
 
     t = Tuple{types[1], types[2]}
 
@@ -242,5 +241,12 @@ function meettype(::Type{T}, ::Type{U}) where {T <: MuType, U <: MuType}
         return Bottom
     end
 end
+
+
+parameterlength(::Type{Union{S,T}}) where {S,T} = parameterlength(S) + parameterlength(T)
+parameterlength(::Type{Tuple{S,T}}) where {S,T} = parameterlength(S) + parameterlength(T)
+parameterlength(::Type{T}) where {T<:MuType} = 1
+parameterlength(::Type{Nil}) = 0
+
 
 Base.:(==)(::Type{U1}, ::Type{U2}) where {U1 <: Union, U2 <: Union} = Set(expand_types(U1)) == Set(expand_types(U2))
