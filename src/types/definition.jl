@@ -77,6 +77,8 @@ isunion(::Type{Union{S, T}}) where {S, T} = true
 isunion(::Type{T}) where {T <: MuType} = false
 
 function uniontype(types::Base.AbstractArray)
+    types = unique(types)
+    
     if isempty(types)
         # In mu, Union type must have at least one type.
         throw(ArgumentError("Cannot create Union type from empty type list."))
@@ -92,7 +94,7 @@ function uniontype(types::Base.AbstractArray)
         t = Union{t, types[i]}
     end
 
-    return t
+    return t |> normalize
 end
 
 uniontype(t::Base.Union) = Union{_type_to_mutype(t.a), uniontype(t.b)}
