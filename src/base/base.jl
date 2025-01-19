@@ -177,10 +177,7 @@ function eachindex(arr::AbstractArray){
     return @eachindex_arr(arr)
 }
 
-function eachindex(t::Any){
-    return @eachindex_tuple(t)
-}
-    
+
 
 function size(arr::AbstractArray){
     return @size_arr(arr)    
@@ -189,23 +186,33 @@ function size(arr::AbstractArray){
 function length(arr::AbstractArray){
     arr_size = size(arr)
     i = 1
-    I = eachindex(arr_size)
 
+    I = eachindex(arr_size)
     s = 1
-    while (i <= length(I)){
+    while (i <= get(size(I), 1)){
         idx = get(I, i)
         s = s * get(arr_size, idx)
+        i = i + 1
     }
 
     return s    
 }
 
 
-function pop(t::Any){
+function get(t::AbstractTuple, idx::Int){
+    return @get_tuple(t, idx)
+}
+
+function eachindex(t::AbstractTuple){
+    return @eachindex_tuple(t)
+}
+    
+
+function pop(t::AbstractTuple){
     return @pop_tuple(t)
 }
 
-function append(t::Any, x::Any){
+function append(t::AbstractTuple, x::AbstractTuple){
     return @append_tuple(t, x)
 }
 
