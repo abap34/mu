@@ -85,15 +85,16 @@ end
 
 function arr_union_unwrap(tfunc::Function)::Function
     function (argtypes::AbstractArray)
-        if MuTypes.isunion(argtypes)
+        cand = _expand_union(argtypes)
+        (length(cand) == 1) && (return tfunc(cand[1]))
+
+        for t in _expand_union(argtypes)
             result = Any[]
             for t in MuTypes.expand_types(argtypes)
                 push!(result, tfunc(t))
             end
 
-            return MuTypes.uniontypes(result)
-        else
-            tfunc(argtypes)
+            return MuTypes.uniontype(result)
         end
     end
 end
