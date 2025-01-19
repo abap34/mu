@@ -130,7 +130,7 @@ end
 
 function formalarg_to_signature(formalargs::MuAST.Expr)
     @assert formalargs.head == MuAST.FORMALARGS "Expected FORMALARGS. Got $(formalargs.head)"
-    return [MuTypes.astype(arg.args[2]) for arg in formalargs.args]
+    return Any[MuTypes.expr_to_type(arg.args[2]) for arg in formalargs.args]
 end
 
 function MethodInstance(name::MuAST.Ident, args::MuAST.Expr, ir::CodeInfo, id::Int)
