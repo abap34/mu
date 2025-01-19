@@ -41,6 +41,7 @@ function lookup(frame::Frame, name::String)
     return frame.env.bindings[name]
 end
 
+const MAX_STACK_SIZE = 100
 const CallStack = Vector{Frame}
 
 function Base.show(io::IO, frame::Frame)
@@ -64,9 +65,24 @@ mutable struct NativeInterpreter <: AbstractInterpreter
     label_to_pc::Dict{Int,Dict{Int,Int}}
     methodtable::MethodTable
     callstack::CallStack
+    execution_count::Int
     function NativeInterpreter(; label_to_pc=Dict{Int,Dict{Int,Int}}(), methodtable=MethodTable(), callstack=CallStack())
         new(label_to_pc, methodtable, callstack)
     end
+end
+
+function pushcallstack!(callstack::CallStack, frame::Frame)
+    if length(callstack) >= MAX_STACK_SIZE
+        throw(ArgumentError("Call stack overflow. Max stack size: $MAX_STACK_SIZE"))
+    end
+    push!(callstack, frame)
+end
+
+function popcallstack!(callstack::CallStack)
+    if isempty(callstack)
+        throw(ArgumentError("Call stack underflow."))
+    end
+    pop!(callstack)
 end
 
 function Base.show(io::IO, interp::NativeInterpreter)
@@ -151,14 +167,12 @@ function execute_expr!(interp::NativeInterpreter, expr::MuAST.Expr)
 end
 
 function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vector{<:Any})
-    @assert all(arg -> arg isa MuAST.Ident || arg isa MuAST.Literal, args) "Arguments must be LITERAL or IDENT. Got $(args)"
-
     argvalues = [execute_expr!(interp, arg) for arg in args]
-    argtypes = [MuTypes.typeof(arg) for arg in argvalues]
+    argtypes = MuTypes.Signature([MuTypes.typeof(arg) for arg in argvalues])
     method_id = first(lookup(interp.methodtable, name, argtypes, matching=:exact))
     mi = mi_by_id(interp.methodtable, method_id)
 
-    push!(interp.callstack, Frame(method_id, 1, Env()))
+    pushcallstack!(interp.callstack, Frame(method_id, 1, Env()))
 
     for (name, value) in zip(mi.argname, argvalues)
         bind!(currentframe(interp), name.name, value)
@@ -166,7 +180,7 @@ function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vect
 
     result = interpret_local!(interp, mi)
 
-    pop!(interp.callstack)
+    popcallstack!(interp.callstack)
 
     return result
 end
@@ -238,7 +252,7 @@ function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
 
     setup_labels!(interp)
 
-    main_id = first(lookup(interp.methodtable, MuAST.Ident("main"), DataType[], matching=:exact))
+    main_id = first(lookup(interp.methodtable, MuAST.Ident("main"), MuTypes.NoArgSignature(), matching=:exact))
 
     push!(interp.callstack, Frame(main_id, 1, Env()))
 
