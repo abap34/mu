@@ -75,11 +75,8 @@
 
 
 # Array operations
-@builtin reshape_arr(args::AbstractArray, env::Dict{String, Any}) = Base.reshape(args[1], args[2])
-
 @builtin get_arr(args::AbstractArray, env::Dict{String, Any}) = args[1][args[2]]
 @builtin set_arr(args::AbstractArray, env::Dict{String, Any}) = (args[1][args[2]] = args[3]; return 0)
 @builtin eachindex_arr(args::AbstractArray, env::Dict{String, Any}) = Base.eachindex(args[1]) |> Base.collect |> Base.Array
 @builtin size_arr(args::AbstractArray, env::Dict{String, Any}) = Base.size(args[1])
-@builtin similar_arr(args::AbstractArray, env::Dict{String, Any}) = Base.similar(args[1])
-
+@builtin reshape_arr(args::AbstractArray, env::Dict{String, Any}) = Base.reshape(args[1], args[2])

@@ -169,15 +169,9 @@ function mul(s1::String, s2::String){
     return @mul_str_str(s1, s2)    
 }
 
-function similar(arr::AbstractArray){
-    return @similar_arr(arr)
-}
-
 function eachindex(arr::AbstractArray){
     return @eachindex_arr(arr)
 }
-
-
 
 function size(arr::AbstractArray){
     return @size_arr(arr)    
@@ -212,7 +206,8 @@ function pop(t::AbstractTuple){
     return @pop_tuple(t)
 }
 
-function append(t::AbstractTuple, x::AbstractTuple){
+
+function append(t::AbstractTuple, x::Any){
     return @append_tuple(t, x)
 }
 
@@ -220,6 +215,10 @@ function append(t::AbstractTuple, x::AbstractTuple){
 function expanddims(arr::AbstractArray){
     result_size = append(size(arr), 1)
     return reshape(arr, result_size)
+}
+
+function reshape(arr::AbstractArray, size::AbstractTuple){
+    return @reshape_arr(arr, size)
 }
 """
 

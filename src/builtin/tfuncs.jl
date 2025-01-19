@@ -78,6 +78,8 @@ function append_tuple(argtypes::AbstractArray)
     return MuTypes.tupletype(append!(tp, [argtypes[2]]))
 end
 
+TFUNCS["append_tuple"] = append_tuple
+
 # Array Operations
 
 function _get_array_eltype(t::DataType)
@@ -92,43 +94,21 @@ function _get_array_dim(t::DataType)
     return t.parameters[2]
 end
 
-function _expand_union(argtypes::AbstractArray)
+function _expand_union(argtypes::AbstractArray)    
     expanded = map(MuTypes.expand_types, argtypes)
     candidates = [collect(t) for t in Iterators.product(expanded...)]
-
     return candidates
 end
 
 function arr_union_unwrap(tfunc::Function)::Function
     function (argtypes::AbstractArray)
-        cand = _expand_union(argtypes)
-        (length(cand) == 1) && (return tfunc(cand[1]))
+        cands = _expand_union(argtypes)
+        (length(cands) == 1) && (return tfunc(cands[1]))
 
-        for t in _expand_union(argtypes)
-            result = Any[]
-            for t in MuTypes.expand_types(argtypes)
-                push!(result, tfunc(t))
-            end
-
-            return MuTypes.uniontype(result)
-        end
+        return MuTypes.uniontype([tfunc(cand) for cand in cands])
     end
 end
 
-
-
-function reshape_arr_tfunc(argtypes::AbstractArray)
-    arr, reshaped_size = argtypes
-
-    (arr == MuTypes.AbstractArray) && (return MuTypes.AbstractArray)
-
-    elem = _get_array_eltype(arr)
-    dim = length(MuTypes.component_types(reshaped_size))
-
-    return MuTypes.Array{elem, dim}
-end    
-
-TFUNCS["reshape_arr"] = arr_union_unwrap(reshape_arr_tfunc)
 
 function get_arr_tfunc(argtypes::AbstractArray)
     arr_type, idx_type = argtypes
@@ -154,12 +134,16 @@ end
 
 TFUNCS["size_arr"] = arr_union_unwrap(size_arr_tfunc)
 
+function reshape_arr_tfunc(argtypes::AbstractArray)
+    arr_type, size_type = argtypes
 
-function similar_arr_tfunc(argtypes::AbstractArray)
-    arr_type = first(argtypes)
     (arr_type == MuTypes.AbstractArray) && (return MuTypes.AbstractArray)
+    (size_type == MuTypes.AbstractTuple) && (return MuTypes.AbstractArray)
 
-    return MuTypes.Array{_get_array_eltype(arr_type), _get_array_dim(arr_type)}
+    elem = _get_array_eltype(arr_type)
+    dim = length(MuTypes.component_types(size_type))
+
+    return MuTypes.Array{elem, dim}
 end
 
-TFUNCS["similar_arr"] = arr_union_unwrap(similar_arr_tfunc)
+TFUNCS["reshape_arr"] = arr_union_unwrap(reshape_arr_tfunc)
