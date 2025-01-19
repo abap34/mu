@@ -178,6 +178,8 @@ function typeof(v)
         return String
     elseif isa(v, Base.Array)
         return Array{_type_to_mutype(eltype(v)), ndims(v)}
+    elseif isa(v, Base.Tuple)
+        return tupletype([typeof(_v) for _v in v])
     else
         throw(ArgumentError("Unknown Value!: $v $(Base.typeof(v)). Only Int, Float64, String, Bool, Array are supported."))
     end
