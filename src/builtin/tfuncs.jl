@@ -51,12 +51,21 @@ set_constant!("mul_str_str", [MuTypes.String, MuTypes.Int], MuTypes.String)
 
 # Tuple operations
 function get_tuple_tfunc(argtypes::AbstractArray)
-    return MuTypes.component_types(argtypes[1])[argtypes[2]]
+    if argtypes[2] != MuTypes.Int
+        @warn "Second argument of get_tuple should be Int. Got $(argtypes[2])"
+        return MuTypes.Bottom
+    end
+
+    if argtypes[1] == MuTypes.AbstractTuple
+        return MuTypes.AbstractTuple
+    end
+
+    return MuTypes.uniontype(MuTypes.component_types(argtypes[1]))
 end
 
 TFUNCS["get_tuple"] = get_tuple_tfunc
 
-set_constant!("eachindex_tuple", [MuTypes.Tuple], MuTypes.Array{MuTypes.Int, 1})
+set_constant!("eachindex_tuple", [MuTypes.AbstractTuple], MuTypes.Array{MuTypes.Int, 1})
 
 function pop_tuple_tfunc(argtypes::AbstractArray)
     return MuTypes.tupletype(MuTypes.component_types(argtypes[1])[1:end-1])
@@ -81,6 +90,13 @@ function _get_array_dim(t::DataType)
     @assert MuTypes.issubtype(t, MuTypes.AbstractArray)
 
     return t.parameters[2]
+end
+
+function _expand_union(argtypes::AbstractArray)
+    expanded = map(MuTypes.expand_types, argtypes)
+    candidates = [collect(t) for t in Iterators.product(expanded...)]
+
+    return candidates
 end
 
 function arr_union_unwrap(tfunc::Function)::Function
