@@ -16,7 +16,7 @@ function double(x::Real){
 
 # T <: AbstractArray -> T
 function double(x::AbstractArray) {
-    result = similar(x)
+    result = reshape(x, size(x))
     I = eachindex(x)
     i = 1
     while (i <= length(I)){
