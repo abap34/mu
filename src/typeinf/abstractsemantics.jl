@@ -1,5 +1,5 @@
 function _abstract_builtincall(f, arg_abstractvalues)::DataType
-    return MuBuiltins.get_tfuncs(f.name)(arg_abstractvalues)
+    return MuBuiltins.get_tfuncs(f.name)(MuTypes.normalize.(arg_abstractvalues))
 end
 
 function _abstract_genericscall(f, arg_abstractvalues, astate::AbstractState)::DataType
