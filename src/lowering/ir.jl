@@ -15,11 +15,39 @@ import ..MuTypes
     RETURN           # Return statement
 end
 
+ALLOWED_EXPR_HEAED = [
+    MuAST.ASSIGN,
+    MuAST.GOTO,
+    MuAST.GOTOIFNOT,
+    MuAST.LABEL,
+    MuAST.RETURN
+]
+
+EXPR_INSTRTYPE_MAP = Dict(
+    MuAST.ASSIGN => ASSIGN,
+    MuAST.GOTO => GOTO,
+    MuAST.GOTOIFNOT => GOTOIFNOT,
+    MuAST.LABEL => LABEL,
+    MuAST.RETURN => RETURN
+)
+
+function _check_nonested(expr::MuAST.Expr)
+    @assert expr.head == MuAST.ASSIGN "Expected ASSIGN. Got $(expr.head) in $expr"
+    rhs = expr.args[2]
+    ((rhs isa MuAST.Ident) || (rhs isa MuAST.Literal)) && return 
+    any(arg -> (arg isa MuAST.Expr), rhs.args) && throw(ArgumentError("Nested expression is not allowed in Instr. Got $expr"))
+end
+
+
 struct Instr
     instrtype::InstrType
     expr::MuAST.Expr
-    function Instr(irtype::IRType, expr::MuAST.Expr)
-        new(irtype, expr)
+    function Instr(instrtype::InstrType, expr::MuAST.Expr)
+        (expr.head in ALLOWED_EXPR_HEAED) || throw(ArgumentError("Invalid ExprHead. Got $(expr.head)"))
+        (expr.head == MuAST.ASSIGN) && _check_nonested(expr)
+        (instrtype != EXPR_INSTRTYPE_MAP[expr.head]) && throw(ArgumentError("Mismatch between InstrType and ExprHead. Got $instrtype and $(expr.head)"))
+
+        new(instrtype, expr)
     end
 end
 
@@ -34,6 +62,7 @@ end
 
 function get_label(instr::Instr)::Int
     if instr.instrtype != LABEL
+        throw(ArgumentError("Expected LABEL. Got $(instr.instrtype)"))
     end
 
     return instr.expr.args[1]
