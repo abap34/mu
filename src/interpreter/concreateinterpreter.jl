@@ -60,13 +60,13 @@ function Base.show(io::IO, callstack::CallStack)
     end
 end
 
-mutable struct NativeInterpreter <: AbstractInterpreter
+mutable struct ConcreateInterpreter <: AbstractInterpreter
     # Method id -> label -> pc
     label_to_pc::Dict{Int,Dict{Int,Int}}
     methodtable::MethodTable
     callstack::CallStack
     execution_count::Int
-    function NativeInterpreter(; label_to_pc=Dict{Int,Dict{Int,Int}}(), methodtable=MethodTable(), callstack=CallStack())
+    function ConcreateInterpreter(; label_to_pc=Dict{Int,Dict{Int,Int}}(), methodtable=MethodTable(), callstack=CallStack())
         new(label_to_pc, methodtable, callstack)
     end
 end
@@ -85,7 +85,7 @@ function popcallstack!(callstack::CallStack)
     pop!(callstack)
 end
 
-function Base.show(io::IO, interp::NativeInterpreter)
+function Base.show(io::IO, interp::ConcreateInterpreter)
     println(io, typeof(interp))
     println(io, "─ Label to PC")
     for (method_id, labels) in interp.label_to_pc
@@ -101,13 +101,13 @@ function Base.show(io::IO, interp::NativeInterpreter)
 
 end
 
-function reset!(interp::NativeInterpreter)
+function reset!(interp::ConcreateInterpreter)
     interp.label_to_pc = Dict{Int,Dict{Int,Int}}()
     interp.methodtable = MethodTable()
     interp.callstack = CallStack()
 end
 
-function label_to_pc(interp::NativeInterpreter, method_id::Int, label::Int)
+function label_to_pc(interp::ConcreateInterpreter, method_id::Int, label::Int)
     if !haskey(interp.label_to_pc, method_id)
         throw(ArgumentError("Method id $method_id not found in label_to_pc. Available method ids: $(keys(interp.label_to_pc))"))
     end
@@ -119,11 +119,11 @@ function label_to_pc(interp::NativeInterpreter, method_id::Int, label::Int)
     return interp.label_to_pc[method_id][label]
 end
 
-function currentframe(interp::NativeInterpreter)
+function currentframe(interp::ConcreateInterpreter)
     return interp.callstack[end]
 end
 
-function setup_labels!(interp::NativeInterpreter)
+function setup_labels!(interp::ConcreateInterpreter)
     for mi in methodinstances(interp.methodtable)
         interp.label_to_pc[mi.id] = Dict{Int,Int}()
 
@@ -136,15 +136,15 @@ function setup_labels!(interp::NativeInterpreter)
     end
 end
 
-function execute_expr!(interp::NativeInterpreter, expr::MuAST.Literal)
+function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Literal)
     return expr
 end
 
-function execute_expr!(interp::NativeInterpreter, expr::MuAST.Ident)
+function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Ident)
     return lookup(currentframe(interp), expr.name)
 end
 
-function execute_expr!(interp::NativeInterpreter, expr::MuAST.Expr)
+function execute_expr!(interp::ConcreateInterpreter, expr::MuAST.Expr)
     if expr.head == MuAST.GCALL
         f, args... = expr.args
 
@@ -166,7 +166,7 @@ function execute_expr!(interp::NativeInterpreter, expr::MuAST.Expr)
     end
 end
 
-function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vector{<:Any})
+function call_generics!(interp::ConcreateInterpreter, name::MuAST.Ident, args::Vector{<:Any})
     argvalues = [execute_expr!(interp, arg) for arg in args]
     argtypes = MuTypes.Signature([MuTypes.typeof(arg) for arg in argvalues])
     method_id = first(lookup(interp.methodtable, name, argtypes, matching=:exact))
@@ -186,7 +186,7 @@ function call_generics!(interp::NativeInterpreter, name::MuAST.Ident, args::Vect
 end
 
 
-function call_builtin!(interp::NativeInterpreter, name::MuAST.Ident, args::Vector{<:Any})
+function call_builtin!(interp::ConcreateInterpreter, name::MuAST.Ident, args::Vector{<:Any})
     try
         MuBuiltins.get_builtin(name.name)(args, currentframe(interp).env.bindings)
     catch e
@@ -201,7 +201,7 @@ function call_builtin!(interp::NativeInterpreter, name::MuAST.Ident, args::Vecto
 end
 
 
-function interpret_local!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
+function interpret_local!(interp::ConcreateInterpreter, mi::MuIR.MethodInstance)
     frame = currentframe(interp)
     ci = mi.ci
 
@@ -247,7 +247,7 @@ function interpret_local!(interp::NativeInterpreter, mi::MuIR.MethodInstance)
 end
 
 
-function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
+function interpret(program::MuIR.ProgramIR, interp::ConcreateInterpreter)
     load!(interp.methodtable, program)
 
     setup_labels!(interp)
@@ -262,7 +262,7 @@ function interpret(program::MuIR.ProgramIR, interp::NativeInterpreter)
 end
 
 function interpret(program::MuIR.ProgramIR)
-    interpret(program, NativeInterpreter())
+    interpret(program, ConcreateInterpreter())
 end
 
 

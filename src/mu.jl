@@ -27,7 +27,7 @@ function run(filename::AbstractString, mode=:interpret; reload_base=false)
     ast = MuCore.parse_file(filename)
     ci = MuCore.lowering(ast)
     if mode == :interpret
-        interp = MuCore.MuInterpreter.NativeInterpreter(methodtable=MuBase.load_base(reload=reload_base))
+        interp = MuCore.MuInterpreter.ConcreateInterpreter(methodtable=MuBase.load_base(reload=reload_base))
 
         MuCore.MuInterpreter.interpret(ci, interp)
     elseif mode == :compile
