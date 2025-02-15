@@ -844,7 +844,7 @@ end
 
 
 # Difficult Tests
-function _load_main_mi(src::String)::Tuple{MuCore.MuInterpreter.MethodTable,MuCore.MuIR.MethodInstance}
+function _load_main_mi(src::String)::Tuple{MuCore.MuInterpreter.MethodTable,MuCore.MuIR.MethodInfo}
     preload_ast = MuCore.parse_file("typeinf/preload.mu")
     preload_lowerd = MuCore.lowering(preload_ast)
     mt = MuBase.load_base()

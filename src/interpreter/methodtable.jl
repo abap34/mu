@@ -3,9 +3,9 @@ using ..MuTypes
 
 # Wrapper for a dictionary of method tables
 struct MethodTable
-    # Function name -> Vector of MethodInstance
-    table::Dict{MuAST.Ident, Vector{MuIR.MethodInstance}}
-    function MethodTable(;table::Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}=Dict{MuAST.Ident,Vector{MuIR.MethodInstance}}())
+    # Function name -> Vector of MethodInfo
+    table::Dict{MuAST.Ident,Vector{MuIR.MethodInfo}}
+    function MethodTable(; table::Dict{MuAST.Ident,Vector{MuIR.MethodInfo}}=Dict{MuAST.Ident,Vector{MuIR.MethodInfo}}())
         new(table)
     end
 end
@@ -57,7 +57,7 @@ function Base.show(io::IO, methodtable::MethodTable)
                 end
             end
             println(io, ") (id: $(method.id))")
-            
+
 
             print(io, "│ $(repeat(" ", name_width)) │ ") # padding
         end
@@ -75,15 +75,15 @@ function load!(methodtable::MethodTable, lowered::MuIR.ProgramIR)
     end
 end
 
-function add_method!(methodtable::MethodTable, mi::MuIR.MethodInstance)
+function add_method!(methodtable::MethodTable, mi::MuIR.MethodInfo)
     if !haskey(methodtable.table, mi.name)
-        methodtable.table[mi.name] = Vector{MuIR.MethodInstance}()
+        methodtable.table[mi.name] = Vector{MuIR.MethodInfo}()
     end
 
     push!(methodtable.table[mi.name], mi)
 end
 
-function mi_by_id(methodtable::MethodTable, id::Int)::MuIR.MethodInstance
+function mi_by_id(methodtable::MethodTable, id::Int)::MuIR.MethodInfo
     for (_, methods) in methodtable.table
         for method in methods
             if method.id == id
@@ -96,7 +96,7 @@ function mi_by_id(methodtable::MethodTable, id::Int)::MuIR.MethodInstance
 end
 
 
-function mis_by_name(methodtable::MethodTable, name::MuAST.Ident)::Vector{MuIR.MethodInstance}
+function mis_by_name(methodtable::MethodTable, name::MuAST.Ident)::Vector{MuIR.MethodInfo}
     if !haskey(methodtable.table, name)
         throw(ArgumentError("Method $name not found in method table. Available methods: $(method_names(methodtable))"))
     end
@@ -105,7 +105,7 @@ function mis_by_name(methodtable::MethodTable, name::MuAST.Ident)::Vector{MuIR.M
 end
 
 
-# Lookup a method in the method table by name and signature and return the Vector of MethodInstance ids.
+# Lookup a method in the method table by name and signature and return the Vector of MethodInfo ids.
 # If `matching` is `:exact`, return the first method which matches the signature.
 # If `matching` is `:possible`, return all methods which can be called with the given signature.
 # If `matching` is `:all`, return all methods which match the signature.

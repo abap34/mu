@@ -13,12 +13,12 @@ import Base
 struct InferenceFrame{T}
     inputs::Vector{T}
     outputs::Vector{T}
-    mi::MuIR.MethodInstance
+    mi::MuIR.MethodInfo
     ∇::Function
 end
 
 
-function InferenceFrame(init::T, n::Int, mi::MuIR.MethodInstance, ∇::Function)::InferenceFrame{T} where {T}
+function InferenceFrame(init::T, n::Int, mi::MuIR.MethodInfo, ∇::Function)::InferenceFrame{T} where {T}
     InferenceFrame{T}([init for i in 1:n], [init for i in 1:n], mi, ∇)
 end
 
@@ -164,7 +164,7 @@ include("abstractsemantics.jl")
 include("solver.jl")
 
 # Interface for type inference
-function infer(mi::MuIR.MethodInstance; argtypes::AbstractArray, mt::MuInterpreter.MethodTable)
+function infer(mi::MuIR.MethodInfo; argtypes::AbstractArray, mt::MuInterpreter.MethodTable)
     initstate = AbstractState(DataType, mt=mt)
 
     for (argname, argtype) in zip(mi.argname, argtypes)
@@ -184,12 +184,12 @@ end
 
 
 # Interface for type inference
-function return_type(mi::MuIR.MethodInstance; argtypes::AbstractArray, mt::MuInterpreter.MethodTable)
+function return_type(mi::MuIR.MethodInfo; argtypes::AbstractArray, mt::MuInterpreter.MethodTable)
     infered_state = infer(mi, argtypes=argtypes, mt=mt)
     return lookup(infered_state.outputs[end], MuAST.RETURN_IDENT)
 end
 
-function show_typing(mi::MuIR.MethodInstance, frame::InferenceFrame; io::IO=stdout)
+function show_typing(mi::MuIR.MethodInfo, frame::InferenceFrame; io::IO=stdout)
     ci = mi.ci
     n = length(ci)
 

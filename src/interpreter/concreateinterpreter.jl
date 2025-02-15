@@ -201,7 +201,7 @@ function call_builtin!(interp::ConcreateInterpreter, name::MuAST.Ident, args::Ve
 end
 
 
-function interpret_local!(interp::ConcreateInterpreter, mi::MuIR.MethodInstance)
+function interpret_local!(interp::ConcreateInterpreter, mi::MuIR.MethodInfo)
     frame = currentframe(interp)
     ci = mi.ci
 

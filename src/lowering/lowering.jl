@@ -196,7 +196,7 @@ function _lowering(expr::MuAST.Expr)
         returnbody = expr.args[1]
         append!(ci, _lowering(MuAST.Expr(MuAST.ASSIGN, [MuAST.RETURN_IDENT, returnbody])))
         pushgoto!(ci, RETURN_LABEL_ID)
-        
+
     else
         throw(ArgumentError("Unsupported expression: $expr"))
     end
@@ -224,7 +224,7 @@ function lowering(expr::MuAST.Expr)::MuIR.ProgramIR
 
         set_return_point!(ci)
 
-        mi = MuIR.MethodInstance(name, args, ci, mi_gen())
+        mi = MuIR.MethodInfo(name, args, ci, mi_gen())
 
         push!(lowerd, mi)
     end

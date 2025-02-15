@@ -34,7 +34,7 @@ EXPR_INSTRTYPE_MAP = Dict(
 function _check_nonested(expr::MuAST.Expr)
     @assert expr.head == MuAST.ASSIGN "Expected ASSIGN. Got $(expr.head) in $expr"
     rhs = expr.args[2]
-    ((rhs isa MuAST.Ident) || (rhs isa MuAST.Literal)) && return 
+    ((rhs isa MuAST.Ident) || (rhs isa MuAST.Literal)) && return
     any(arg -> (arg isa MuAST.Expr), rhs.args) && throw(ArgumentError("Nested expression is not allowed in Instr. Got $expr"))
 end
 
@@ -132,13 +132,13 @@ struct CodeInfo
 end
 
 # Information of each **method**.
-struct MethodInstance
+struct MethodInfo
     name::MuAST.Ident               # Name of the method (not unique) 
     argname::Vector{MuAST.Ident}    # Argument names (e.g. [`a`, `b`, `c`])
     signature::MuTypes.Signature    # Signature of the method. All elements must be MuTypes.
     ci::CodeInfo                    # IR of the method
     id::Int                         # id of the method (unique)
-    function MethodInstance(name::MuAST.Ident, argname::AbstractArray, signature::MuTypes.Signature, ci::CodeInfo, id::Int)
+    function MethodInfo(name::MuAST.Ident, argname::AbstractArray, signature::MuTypes.Signature, ci::CodeInfo, id::Int)
         if length(argname) != length(signature)
             throw(ArgumentError("Length of argname and signature must be the same. Got $(length(argname)) and $(length(signature))"))
         end
@@ -155,11 +155,11 @@ function get_names(formalargs::MuAST.Expr)
     return [arg.args[1] for arg in formalargs.args]
 end
 
-function MethodInstance(name::MuAST.Ident, args::MuAST.Expr, ir::CodeInfo, id::Int)
+function MethodInfo(name::MuAST.Ident, args::MuAST.Expr, ir::CodeInfo, id::Int)
     if args.head != MuAST.FORMALARGS
         throw(ArgumentError("Arguments must be `FORMALARGS`. Got $(args.head)"))
     end
-    return MethodInstance(name, get_names(args), MuTypes.formalargs_to_signature(args), ir, id)
+    return MethodInfo(name, get_names(args), MuTypes.formalargs_to_signature(args), ir, id)
 end
 
 
@@ -229,7 +229,7 @@ function Base.show(io::IO, ci::CodeInfo)
     end
 end
 
-function Base.show(io::IO, mi::MethodInstance)
+function Base.show(io::IO, mi::MethodInfo)
     print(io, "function ", mi.name, "(")
     for i in 1:length(mi.argname)
         print(io, mi.argname[i])
@@ -244,7 +244,7 @@ function Base.show(io::IO, mi::MethodInstance)
     println(io, "end")
 end
 
-const ProgramIR = Vector{MethodInstance}
+const ProgramIR = Vector{MethodInfo}
 
 function Base.show(io::IO, program::ProgramIR)
     for mi in program

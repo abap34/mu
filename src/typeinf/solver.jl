@@ -37,7 +37,7 @@ const MAX_PARAMETER_LENGTH = 10
 #  It is only guaranteed to find a supertype.)
 function minimum_supertype(types::Vector{DataType})
     candidates = [
-        MuTypes.Real, 
+        MuTypes.Real,
         MuTypes.AbstractString,
         MuTypes.AbstractArray,
         MuTypes.Any
@@ -74,7 +74,7 @@ function ⊔(state1::AbstractState, state2::AbstractState)
 end
 
 function abstract_interpret(
-    mi::MuIR.MethodInstance,
+    mi::MuIR.MethodInfo,
     abstract_semantics::Function,
     ∇::Function;
     initstate::AbstractState=AbstractState(DataType),
