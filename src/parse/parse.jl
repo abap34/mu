@@ -18,7 +18,7 @@ using .MuParse
 function removecomments(src::String)
     removed = ""
     for line in split(src, '\n')
-        if !startswith(line, "#")
+        if !startswith(line, r"[ \t]*#")
             removed *= line
         end
     end

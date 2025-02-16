@@ -63,7 +63,7 @@ using PEG
 
 
 @rule mul = (
-    unary & ((r"\*"p, r"/"p, r"%"p) & unary)[*]
+    unary & ((r"\*"p, r"/"p, r"%"p, r"\^"p) & unary)[*]
 ) |> build_binop
 
 
