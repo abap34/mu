@@ -69,7 +69,11 @@ end
 function build_unary(w::AbstractArray)
     op, expr = w
     if op == ["-"]
-        return MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), expr])
+        if expr isa MuAST.Literal
+            return -expr
+        else
+            return MuAST.Expr(MuAST.GCALL, [MuAST.Ident("sub"), expr])
+        end
     else
         return expr
     end
