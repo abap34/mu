@@ -31,6 +31,28 @@ function main(){
 }
 ```
 
+
+## Quick Start
+
+```
+$ git clone https://github.com/abap34/mu.git
+$ cd mu
+$ julia --project=.
+julia> using mu.MuCore; using mu.MuBase
+
+julia> ast = MuCore.parse_file("example/example.mu");  # parse a file
+
+julia> lowerd = MuCore.lowering(ast);   # lowering
+
+julia> mt = MuBase.load_base(); # get method table with base functions
+
+julia> MuCore.MuInterpreter.load!(mt, lowerd); # load lowered code
+
+julia> MuCore.MuTypeInf.return_type(lowerd[3], argtypes=[MuCore.MuTypes.Array{MuCore.MuTypes.Int, 1}, MuCore.MuTypes.Int], mt=mt)  # inference `binarysearch` return `Int` or `Bool`
+mu.MuCore.MuTypes.Union{mu.MuCore.MuTypes.Int, mu.MuCore.MuTypes.Bool}
+```
+
+
 ## Installation
 
 ## Requirements
@@ -56,7 +78,6 @@ function main(){
 
 ## Examples
 
-- [Hello, World!](example/hello.mu)
 - [FizzBuzz](example/fizzbuzz.mu)
 - [多重ディスパッチ](example/multipledispatch.mu)
 
