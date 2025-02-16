@@ -149,6 +149,10 @@ function print(s::Any){
     return @print(s)
 }
 
+function println(s::Any){
+    return @println(s)    
+}
+
 function length(S::String){
     return @length_str(S)
 }
@@ -220,7 +224,28 @@ function expanddims(arr::AbstractArray){
 function reshape(arr::AbstractArray, size::AbstractTuple){
     return @reshape_arr(arr, size)
 }
+
+function transpose(arr::AbstractArray){
+    return @transpose_arr(arr)
+}
+
+function sum(arr::Array{Float, 1}){
+    s = 0.0
+    i = 1
+    I = eachindex(arr)
+    while (i <= get(size(I), 1)){
+        idx = get(I, i)
+        s = s + get(arr, idx)
+        i = i + 1
+    }
+    return s
+}
+
+function linspace(start::Float, stop::Float, length::Int){
+    return @linspace_arr(start, stop, length)
+}
 """
+
 
 const _BASE_AST = MuCore.parse(BASE)
 

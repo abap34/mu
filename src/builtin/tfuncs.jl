@@ -15,6 +15,10 @@ set_constant!("div_int_int", [MuTypes.Int, MuTypes.Int], MuTypes.Float)
 set_constant!("div_int_float", [MuTypes.Int, MuTypes.Float], MuTypes.Float)
 set_constant!("div_float_int", [MuTypes.Float, MuTypes.Int], MuTypes.Float)
 set_constant!("div_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Float)
+set_constant!("pow_int_int", [MuTypes.Int, MuTypes.Int], MuTypes.Int)
+set_constant!("pow_int_float", [MuTypes.Int, MuTypes.Float], MuTypes.Float)
+set_constant!("pow_float_int", [MuTypes.Float, MuTypes.Int], MuTypes.Float)
+set_constant!("pow_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Float)
 set_constant!("mod_int_int", [MuTypes.Int, MuTypes.Int], MuTypes.Int)
 set_constant!("eq_int_int", [MuTypes.Int, MuTypes.Int], MuTypes.Bool)
 set_constant!("eq_float_float", [MuTypes.Float, MuTypes.Float], MuTypes.Bool)
@@ -38,6 +42,7 @@ set_constant!("floor_float", [MuTypes.Float], MuTypes.Int)
 
 # I/O operations
 set_constant!("print", [MuTypes.String], MuTypes.Int)
+set_constant!("println", [MuTypes.String], MuTypes.Int)
 set_constant!("readline", [], MuTypes.String)
 
 # Type conversion
@@ -147,3 +152,27 @@ function reshape_arr_tfunc(argtypes::AbstractArray)
 end
 
 TFUNCS["reshape_arr"] = arr_union_unwrap(reshape_arr_tfunc)
+
+function transpose_arr_tfunc(argtypes::AbstractArray)
+    arr_type = argtypes[1]
+
+    (arr_type == MuTypes.AbstractArray) && (return MuTypes.AbstractArray)
+
+    elem = _get_array_eltype(arr_type)
+    dim = _get_array_dim(arr_type)
+
+    # Vector becomes a row matrix
+    if dim == 1
+        return MuTypes.Array{elem, 2}
+    else
+        return MuTypes.Array{elem, dim}
+    end
+end
+
+TFUNCS["transpose_arr"] = arr_union_unwrap(transpose_arr_tfunc)
+
+function linspace_arr_tfunc(argtypes::AbstractArray)
+    return MuTypes.Array{MuTypes.Float, 1}
+end
+
+TFUNCS["linspace_arr"] = linspace_arr_tfunc

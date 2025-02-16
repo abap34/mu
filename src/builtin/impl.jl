@@ -16,6 +16,10 @@
 @builtin div_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] / args[2]
 @builtin div_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] / args[2]
 @builtin div_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] / args[2]
+@builtin pow_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
+@builtin pow_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
+@builtin pow_float_int(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
+@builtin pow_float_float(args::AbstractArray, env::Dict{String, Any}) = args[1] ^ args[2]
 @builtin mod_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] % args[2]
 @builtin eq_int_int(args::AbstractArray, env::Dict{String, Any}) = args[1] == args[2]
 @builtin eq_int_float(args::AbstractArray, env::Dict{String, Any}) = args[1] == args[2]
@@ -55,7 +59,8 @@
 @builtin floor_float(args::AbstractArray, env::Dict{String, Any}) = Base.floor(Int, args[1])
 
 # I/O operations
-@builtin print(args::AbstractArray, env::Dict{String, Any}) = (Base.println(args...); return 0)
+@builtin print(args::AbstractArray, env::Dict{String, Any}) = (Base.print(args...); return 0)
+@builtin println(args::AbstractArray, env::Dict{String, Any}) = (Base.println(args...); return 0)
 @builtin readline(args::AbstractArray, env::Dict{String, Any}) = Base.readline()
 
 # Parse
@@ -80,3 +85,7 @@
 @builtin eachindex_arr(args::AbstractArray, env::Dict{String, Any}) = Base.eachindex(args[1]) |> Base.collect |> Base.Array
 @builtin size_arr(args::AbstractArray, env::Dict{String, Any}) = Base.size(args[1])
 @builtin reshape_arr(args::AbstractArray, env::Dict{String, Any}) = Base.reshape(args[1], args[2])
+@builtin transpose_arr(args::AbstractArray, env::Dict{String, Any}) = Base.Array(transpose(args[1]))
+@builtin linspace_arr(args::AbstractArray, env::Dict{String, Any}) = Base.collect(Base.range(start=args[1], stop=args[2], length=args[3]))
+
+
