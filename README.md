@@ -37,10 +37,13 @@ function main(){
 
 ## Quick Start
 
-```
+```bash
 $ git clone https://github.com/abap34/mu.git
 $ cd mu
 $ julia --project=.
+```
+
+```julia
 julia> using mu.MuCore; using mu.MuBase
 
 julia> ast = MuCore.parse_file("example/example.mu");  # parse a file
