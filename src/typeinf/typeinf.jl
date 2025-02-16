@@ -229,7 +229,7 @@ function show_typing(mi::MuIR.MethodInfo, frame::InferenceFrame; io::IO=stdout)
             elseif inferred_type == MuTypes.Any
                 color = :red
             else
-                if MuTypes.is_concrete(inferred_type)
+                if MuTypes.isconcrete(inferred_type)
                     color = :blue
                 else
                     color = :magenta
